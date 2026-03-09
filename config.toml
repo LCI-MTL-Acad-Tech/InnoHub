@@ -1,0 +1,27 @@
+[matching]
+similarity_threshold = 0.85      # minimum score to surface a match
+dedup_threshold      = 0.85      # minimum score to flag a duplicate at ingest
+default_results      = 5         # --n default
+
+[server]
+host = "127.0.0.1"
+port = 8080
+
+[paths]
+data        = "data"
+documents   = "data/documents"
+embeddings  = "data/embeddings"
+students    = "data/students"
+companies   = "data/companies"
+projects    = "data/projects"
+assignments = "data/assignments.csv"
+programs    = "data/programs.csv"
+man         = "man"
+
+[model]
+# Downloaded once to ~/.cache/huggingface/, never used online after that
+name = "paraphrase-multilingual-mpnet-base-v2"
+
+[semesters]
+# Format: <year>-<H|A>   H = hiver (winter), A = automne (fall)
+format = "{year}-{term}"

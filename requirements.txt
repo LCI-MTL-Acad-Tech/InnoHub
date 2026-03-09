@@ -1,0 +1,24 @@
+# Document parsing
+pymupdf>=1.23
+python-docx>=1.1
+beautifulsoup4>=4.12
+lxml>=5.0
+
+# Embeddings (offline after first download)
+sentence-transformers>=3.0
+numpy>=1.26
+
+# Fuzzy matching (dedup + company name resolution)
+rapidfuzz>=3.6
+
+# Language detection (offline)
+langdetect>=1.0.9
+
+# Config
+tomllib>=2.0; python_version < "3.11"  # built-in from 3.11 onwards
+
+# CLI formatting
+rich>=13.7
+
+# Web dashboard
+# (stdlib http.server only — no extra dependency)
