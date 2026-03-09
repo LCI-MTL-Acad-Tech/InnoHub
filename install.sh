@@ -6,7 +6,7 @@ echo ""
 
 # Generate man pages from source
 echo "Generating man pages..."
-python main.py --generate-man
+python3 main.py --generate-man
 
 # Install to user man path (no sudo needed)
 MAN_DIR="$HOME/.local/share/man/man1"
@@ -27,7 +27,7 @@ echo ""
 SCRIPT_PATH="$(realpath main.py)"
 read -rp "Add 'innovhub' alias to ~/.bashrc? [y/N]: " ADD_ALIAS
 if [[ "$ADD_ALIAS" =~ ^[Yy]$ ]]; then
-    echo "alias innovhub='python $SCRIPT_PATH'" >> "$HOME/.bashrc"
+    echo "alias innovhub='python3 $SCRIPT_PATH'" >> "$HOME/.bashrc"
     echo "Alias added. Run: source ~/.bashrc"
 fi
 
