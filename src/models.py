@@ -3,7 +3,6 @@ models.py — dataclasses mirroring the JSON schemas and CSV rows.
 All persistence logic lives in store.py; these are pure data containers.
 """
 from dataclasses import dataclass, field
-from typing import Optional
 from datetime import date
 
 
@@ -61,7 +60,7 @@ class Project:
     project_id: str
     company_id: str
     title: str
-    status: str        # active | inactive
+    status: str        # active | inactive | closed
     semester: str
     language: str      # fr | en
     capacity: Capacity
@@ -94,8 +93,26 @@ class AssignmentRow:
     notes: str = ""
 
 
-# Valid status transitions
-STUDENT_STATUSES  = {"active", "inactive", "completed"}
-COMPANY_STATUSES  = {"active", "inactive"}
-PROJECT_STATUSES  = {"active", "inactive"}
+@dataclass
+class TermWeight:
+    term: str
+    student_weight: float
+    project_weight: float
+    shared_weight: float
+
+
+@dataclass
+class Explanation:
+    student_number: str
+    project_id: str
+    score: float
+    shared_terms: list[TermWeight]
+    student_only_terms: list[str]
+    project_only_terms: list[str]
+
+
+# Valid statuses
+STUDENT_STATUSES    = {"active", "inactive", "completed"}
+COMPANY_STATUSES    = {"active", "inactive"}
+PROJECT_STATUSES    = {"active", "inactive", "closed"}
 ASSIGNMENT_STATUSES = {"proposed", "confirmed", "completed", "cancelled"}
