@@ -55,14 +55,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_confirm.add_argument("student_number", metavar="STUDENT_NUMBER")
     p_confirm.add_argument("--project",      metavar="PROJECT_ID")
 
-    # ── edit-assignment ───────────────────────────────────────────────────────
-    p_edit = sub.add_parser("edit-assignment", help="Edit hours for a specific task assignment.")
+    # ── edit ──────────────────────────────────────────────────────────────────
+    p_edit = sub.add_parser("edit", help="Edit hours for a specific task assignment.")
     p_edit.add_argument("student_number", metavar="STUDENT_NUMBER")
     p_edit.add_argument("--project",      metavar="PROJECT_ID", required=True)
     p_edit.add_argument("--task",         metavar="TASK_ID",    required=True)
 
-    # ── remove-assignment ─────────────────────────────────────────────────────
-    p_remove = sub.add_parser("remove-assignment", help="Remove a student from a project (all or one task).")
+    # ── remove ────────────────────────────────────────────────────────────────
+    p_remove = sub.add_parser("remove", help="Remove a student from a project (all or one task).")
     p_remove.add_argument("student_number", metavar="STUDENT_NUMBER")
     p_remove.add_argument("--project",      metavar="PROJECT_ID", required=True)
     p_remove.add_argument("--task",         metavar="TASK_ID")
@@ -91,8 +91,8 @@ def build_parser() -> argparse.ArgumentParser:
         a_target.add_argument("--company", metavar="NAME")
         p_act.add_argument("--semester",   metavar="TAG")
 
-    # ── close-project ─────────────────────────────────────────────────────────
-    p_close = sub.add_parser("close-project", help="Close a project (purges documents, retains CSV history).")
+    # ── close ─────────────────────────────────────────────────────────────────
+    p_close = sub.add_parser("close", help="Close a project (purges documents, retains CSV history).")
     p_close.add_argument("project_id", metavar="PROJECT_ID")
 
     # ── complete ──────────────────────────────────────────────────────────────
@@ -118,8 +118,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_dash = sub.add_parser("dashboard", help="Show CLI dashboard.")
     p_dash.add_argument("--semester", metavar="TAG")
 
-    # ── dashboard-web ─────────────────────────────────────────────────────────
-    p_web = sub.add_parser("dashboard-web", help="Start local web dashboard (http://127.0.0.1:8080).")
+    # ── web ───────────────────────────────────────────────────────────────────
+    p_web = sub.add_parser("web", help="Start local web dashboard (http://127.0.0.1:8080).")
     p_web.add_argument("--port",     metavar="PORT", type=int, default=8080)
     p_web.add_argument("--semester", metavar="TAG")
 
@@ -155,17 +155,18 @@ def main():
     elif cmd == "match":             from src.match         import run;           run(args)
     elif cmd == "assign":            from src.assign        import run_assign;    run_assign(args)
     elif cmd == "confirm":           from src.assign        import run_confirm;   run_confirm(args)
-    elif cmd == "edit-assignment":   from src.assign        import run_edit;      run_edit(args)
-    elif cmd == "remove-assignment": from src.assign        import run_remove;    run_remove(args)
+    elif cmd == "edit":              from src.assign        import run_edit;      run_edit(args)
+    elif cmd == "remove":            from src.assign        import run_remove;    run_remove(args)
     elif cmd == "status":            from src.match         import run_status;    run_status(args)
     elif cmd == "list":              from src.match         import run_list;      run_list(args)
     elif cmd in ("activate",
                  "deactivate"):      from src.lifecycle     import run;           run(args)
-    elif cmd == "close-project":     from src.lifecycle     import run_close;     run_close(args)
+    elif cmd == "close":             from src.lifecycle     import run_close;     run_close(args)
     elif cmd == "complete":          from src.lifecycle     import run_complete;  run_complete(args)
     elif cmd == "reassign":          from src.lifecycle     import run_reassign;  run_reassign(args)
     elif cmd == "explain":           from src.match         import run_explain;   run_explain(args)
-    elif cmd == "dashboard-web":     from src.dashboard_web import run;           run(args)
+    elif cmd == "dashboard":         from src.dashboard_cli import run;           run(args)
+    elif cmd == "web":               from src.dashboard_web import run;           run(args)
     else:
         parser.print_help()
 

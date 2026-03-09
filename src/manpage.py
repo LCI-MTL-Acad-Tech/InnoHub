@@ -56,11 +56,11 @@ _DESCRIPTIONS = {
         "proposed assignment, --project is optional and the single open assignment "
         "is confirmed automatically."
     ),
-    "edit-assignment": (
+    "edit": (
         "Edit the planned hours for a specific task within an existing assignment. "
         "Both --project and --task are required to identify the row unambiguously."
     ),
-    "remove-assignment": (
+    "remove": (
         "Cancel a student's assignment. Without --task, all task rows for that "
         "student on that project are cancelled and the assignment is fully removed. "
         "With --task, only the specified task row is cancelled. "
@@ -89,14 +89,13 @@ _DESCRIPTIONS = {
         "Deactivating a company hides all its projects from matching."
     ),
     "complete": (
-        "Mark a student as completed. Their source documents and embeddings are "
-        "purged from disk, but all rows in assignments.csv are retained as a "
-        "permanent log of their participation in the Innovation Hub."
+        "Mark a student as completed. Purges documents and embeddings, retains "
+        "history. If any active assignments exist, a confirmation is required "
+        "before proceeding; all affected assignments are cancelled."
     ),
-    "close-project": (
-        "Mark a project as closed. Closed projects are excluded from matching "
-        "and their source documents and embeddings are purged from disk. "
-        "All assignment history for the project is retained in assignments.csv. "
+    "close": (
+        "Mark a project as closed. Purges documents and embeddings, retains "
+        "history. Closed projects are excluded from matching. "
         "If any active assignments exist, a confirmation is required before "
         "proceeding; all affected assignments are cancelled."
     ),
@@ -120,7 +119,7 @@ _DESCRIPTIONS = {
         "program, project fill status per company, and the list of unplaced "
         "students. Filter to a specific semester with --semester."
     ),
-    "dashboard-web": (
+    "web": (
         "Start a local HTTP server (bound to 127.0.0.1 only) and open a visual "
         "dashboard in the browser. The dashboard queries live JSON endpoints and "
         "allows browsing student, project, and company records with links to their "
@@ -161,14 +160,14 @@ _EXAMPLES = {
         ("confirm 2134567 --project studio_noko_refonte_ui_2025H",
          "Confirm a specific proposed assignment."),
     ],
-    "edit-assignment": [
-        ("edit-assignment 2134567 --project studio_noko_refonte_ui_2025H --task t2",
+    "edit": [
+        ("edit 2134567 --project studio_noko_refonte_ui_2025H --task t2",
          "Edit hours for a specific task."),
     ],
-    "remove-assignment": [
-        ("remove-assignment 2134567 --project studio_noko_refonte_ui_2025H",
+    "remove": [
+        ("remove 2134567 --project studio_noko_refonte_ui_2025H",
          "Remove student from all tasks on a project."),
-        ("remove-assignment 2134567 --project studio_noko_refonte_ui_2025H --task t2",
+        ("remove 2134567 --project studio_noko_refonte_ui_2025H --task t2",
          "Remove student from one task only."),
     ],
     "status": [
@@ -205,8 +204,8 @@ _EXAMPLES = {
         ("complete 2134567",
          "Mark student as completed and purge their documents."),
     ],
-    "close-project": [
-        ("close-project studio_noko_refonte_ui_2025H",
+    "close": [
+        ("close studio_noko_refonte_ui_2025H",
          "Close a project, purge its documents, cancel active assignments."),
     ],
     "reassign": [
@@ -225,10 +224,10 @@ _EXAMPLES = {
         ("dashboard --semester 2025-H",
          "Dashboard filtered to the 2025-H cohort."),
     ],
-    "dashboard-web": [
-        ("dashboard-web",
+    "web": [
+        ("web",
          "Start web dashboard on default port 8080."),
-        ("dashboard-web --port 9090 --semester 2025-H",
+        ("web --port 9090 --semester 2025-H",
          "Start on a custom port, scoped to 2025-H."),
     ],
 }
@@ -236,20 +235,20 @@ _EXAMPLES = {
 _SEE_ALSO = {
     "ingest":            ["innovhub-match(1)", "innovhub-status(1)"],
     "match":             ["innovhub-ingest(1)", "innovhub-assign(1)", "innovhub-explain(1)"],
-    "assign":            ["innovhub-match(1)", "innovhub-confirm(1)", "innovhub-remove-assignment(1)"],
+    "assign":            ["innovhub-match(1)", "innovhub-confirm(1)", "innovhub-remove(1)"],
     "confirm":           ["innovhub-assign(1)"],
-    "edit-assignment":   ["innovhub-assign(1)", "innovhub-remove-assignment(1)"],
-    "remove-assignment": ["innovhub-assign(1)", "innovhub-edit-assignment(1)"],
+    "edit":   ["innovhub-assign(1)", "innovhub-remove(1)"],
+    "remove": ["innovhub-assign(1)", "innovhub-edit(1)"],
     "status":            ["innovhub-list(1)", "innovhub-dashboard(1)"],
     "list":              ["innovhub-status(1)", "innovhub-dashboard(1)"],
     "activate":          ["innovhub-deactivate(1)"],
     "deactivate":        ["innovhub-activate(1)", "innovhub-complete(1)"],
     "complete":          ["innovhub-deactivate(1)"],
-    "close-project":     ["innovhub-deactivate(1)", "innovhub-complete(1)"],
-    "reassign":          ["innovhub-status(1)", "innovhub-remove-assignment(1)"],
+    "close":     ["innovhub-deactivate(1)", "innovhub-complete(1)"],
+    "reassign":          ["innovhub-status(1)", "innovhub-remove(1)"],
     "explain":           ["innovhub-match(1)"],
-    "dashboard":         ["innovhub-dashboard-web(1)", "innovhub-status(1)"],
-    "dashboard-web":     ["innovhub-dashboard(1)"],
+    "dashboard":         ["innovhub-web(1)", "innovhub-status(1)"],
+    "web":     ["innovhub-dashboard(1)"],
 }
 
 
