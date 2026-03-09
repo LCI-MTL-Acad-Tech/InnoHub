@@ -91,6 +91,10 @@ def build_parser() -> argparse.ArgumentParser:
         a_target.add_argument("--company", metavar="NAME")
         p_act.add_argument("--semester",   metavar="TAG")
 
+    # ── close-project ─────────────────────────────────────────────────────────
+    p_close = sub.add_parser("close-project", help="Close a project (purges documents, retains CSV history).")
+    p_close.add_argument("project_id", metavar="PROJECT_ID")
+
     # ── complete ──────────────────────────────────────────────────────────────
     p_complete = sub.add_parser("complete", help="Mark a student as completed (purges documents).")
     p_complete.add_argument("student_number", metavar="STUDENT_NUMBER")
@@ -123,7 +127,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main():
+    from src.setup_wizard import needs_setup, run_wizard
     from src.bootstrap import bootstrap
+
+    # First-run: no arguments and data/ absent → offer guided setup
+    if len(sys.argv) == 1 and needs_setup():
+        run_wizard()
+        return
+
     bootstrap()
 
     parser = build_parser()
@@ -150,6 +161,7 @@ def main():
     elif cmd == "list":              from src.match         import run_list;      run_list(args)
     elif cmd in ("activate",
                  "deactivate"):      from src.lifecycle     import run;           run(args)
+    elif cmd == "close-project":     from src.lifecycle     import run_close;     run_close(args)
     elif cmd == "complete":          from src.lifecycle     import run_complete;  run_complete(args)
     elif cmd == "reassign":          from src.lifecycle     import run_reassign;  run_reassign(args)
     elif cmd == "explain":           from src.match         import run_explain;   run_explain(args)
