@@ -100,6 +100,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_reassign.add_argument("student_number", metavar="STUDENT_NUMBER")
     p_reassign.add_argument("--semester",     metavar="TAG", required=True)
 
+    # ── explain ───────────────────────────────────────────────────────────────
+    p_explain = sub.add_parser(
+        "explain",
+        help="Show TF-IDF explanation for a student–project match."
+    )
+    p_explain.add_argument("student_number", metavar="STUDENT_NUMBER")
+    p_explain.add_argument("--project",      metavar="PROJECT_ID", required=True)
+    p_explain.add_argument("--top-n",        metavar="N", type=int, default=10,
+                           help="Number of shared terms to show. Default: 10.")
+
     # ── dashboard ─────────────────────────────────────────────────────────────
     p_dash = sub.add_parser("dashboard", help="Show CLI dashboard.")
     p_dash.add_argument("--semester", metavar="TAG")
@@ -142,7 +152,7 @@ def main():
                  "deactivate"):      from src.lifecycle     import run;           run(args)
     elif cmd == "complete":          from src.lifecycle     import run_complete;  run_complete(args)
     elif cmd == "reassign":          from src.lifecycle     import run_reassign;  run_reassign(args)
-    elif cmd == "dashboard":         from src.dashboard_cli import run;           run(args)
+    elif cmd == "explain":           from src.match         import run_explain;   run_explain(args)
     elif cmd == "dashboard-web":     from src.dashboard_web import run;           run(args)
     else:
         parser.print_help()
