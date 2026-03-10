@@ -24,12 +24,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_ingest.add_argument("files", nargs="+", metavar="FILE")
     p_ingest.add_argument(
         "--type", "-t", required=True,
-        choices=["s", "student", "c", "company", "p", "project"],
-        metavar="TYPE", help="s|student  c|company  p|project"
+        choices=["s", "student", "c", "company", "p", "project", "coord", "coordinator"],
+        metavar="TYPE", help="s|student  c|company  p|project  coord|coordinator"
     )
     p_ingest.add_argument("--id",      metavar="STUDENT_NUMBER", help="Student number (required for --type s).")
     p_ingest.add_argument("--program", "--p", metavar="CODE",    help="Program code (required for --type s).")
     p_ingest.add_argument("--company", metavar="COMPANY_ID",     help="Company ID (required for --type p).")
+    p_ingest.add_argument("--tasks",   metavar="FILE",            help="TOML file defining project tasks (--type p only). If omitted, tasks are entered interactively.")
     p_ingest.add_argument("--semester", metavar="TAG",           help="e.g. 2025-H")
 
     # ── match ─────────────────────────────────────────────────────────────────
@@ -68,13 +69,20 @@ def build_parser() -> argparse.ArgumentParser:
     p_remove.add_argument("--task",         metavar="TASK_ID")
 
     # ── status ────────────────────────────────────────────────────────────────
-    p_status = sub.add_parser("status", help="Show status of a student, project, or company.")
+    p_status = sub.add_parser("status", help="Show status of a student, project, company, or coordinator.")
     s_target = p_status.add_mutually_exclusive_group(required=True)
-    s_target.add_argument("--student",  metavar="STUDENT_NUMBER")
-    s_target.add_argument("--project",  metavar="PROJECT_ID")
-    s_target.add_argument("--company",  metavar="NAME")
-    s_target.add_argument("--all",      action="store_true")
-    p_status.add_argument("--search",   metavar="QUERY")
+    s_target.add_argument("--student",     metavar="STUDENT_NUMBER")
+    s_target.add_argument("--project",     metavar="PROJECT_ID")
+    s_target.add_argument("--company",     metavar="NAME")
+    s_target.add_argument("--coordinator", metavar="NAME_OR_EMAIL")
+    s_target.add_argument("--all",         action="store_true")
+    p_status.add_argument("--search",      metavar="QUERY")
+
+    # ── assign-coordinator ────────────────────────────────────────────────────
+    p_ac = sub.add_parser("assign-coordinator", help="Attach or detach a coordinator from a project.")
+    p_ac.add_argument("project_id",  metavar="PROJECT_ID")
+    p_ac.add_argument("--add",       metavar="NAME_OR_EMAIL", help="Coordinator to add.")
+    p_ac.add_argument("--remove",    metavar="NAME_OR_EMAIL", help="Coordinator to remove.")
 
     # ── list ──────────────────────────────────────────────────────────────────
     p_list = sub.add_parser("list", help="List students, projects, or companies.")
@@ -157,6 +165,7 @@ def main():
     elif cmd == "confirm":           from src.assign        import run_confirm;   run_confirm(args)
     elif cmd == "edit":              from src.assign        import run_edit;      run_edit(args)
     elif cmd == "remove":            from src.assign        import run_remove;    run_remove(args)
+    elif cmd == "assign-coordinator": from src.coordinator   import run_assign_coordinator; run_assign_coordinator(args)
     elif cmd == "status":            from src.match         import run_status;    run_status(args)
     elif cmd == "list":              from src.match         import run_list;      run_list(args)
     elif cmd in ("activate",
