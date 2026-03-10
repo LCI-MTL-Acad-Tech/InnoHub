@@ -56,6 +56,18 @@ class Company:
 
 
 @dataclass
+class Coordinator:
+    coordinator_id: str
+    name: str
+    email: str
+    programs: list[str]        # empty list means all programs
+    status: str                # active | inactive
+    documents: list[Document] = field(default_factory=list)
+    embedding_file: str = ""
+    notes: str = ""
+
+
+@dataclass
 class Project:
     project_id: str
     company_id: str
@@ -68,6 +80,7 @@ class Project:
     lead_email: str
     renewal_history: list[dict] = field(default_factory=list)
     documents: list[Document] = field(default_factory=list)
+    coordinators: list[str] = field(default_factory=list)  # coordinator_ids
     embedding_file: str = ""
     notes: str = ""
 
@@ -112,7 +125,8 @@ class Explanation:
 
 
 # Valid statuses
-STUDENT_STATUSES    = {"active", "inactive", "completed"}
-COMPANY_STATUSES    = {"active", "inactive"}
-PROJECT_STATUSES    = {"active", "inactive", "closed"}
-ASSIGNMENT_STATUSES = {"proposed", "confirmed", "completed", "cancelled"}
+STUDENT_STATUSES     = {"active", "inactive", "completed"}
+COMPANY_STATUSES     = {"active", "inactive"}
+PROJECT_STATUSES     = {"active", "inactive", "closed"}
+COORDINATOR_STATUSES = {"active", "inactive"}
+ASSIGNMENT_STATUSES  = {"proposed", "confirmed", "completed", "cancelled"}

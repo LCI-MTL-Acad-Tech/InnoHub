@@ -69,3 +69,22 @@ def rewrite_assignments(rows: list[dict]) -> None:
         w = csv.DictWriter(f, fieldnames=fieldnames)
         w.writeheader()
         w.writerows(rows)
+
+def load_coordinators() -> list[dict]:
+    """Return all coordinator metadata dicts, sorted by name."""
+    ids = list_ids("coordinators")
+    coords = []
+    for cid in ids:
+        try:
+            coords.append(load_json("coordinators", cid))
+        except Exception:
+            pass
+    return sorted(coords, key=lambda c: c.get("name", ""))
+
+def default_coordinator() -> dict:
+    """Return the default coordinator from config, or empty dict if not set."""
+    import tomllib
+    with open("config.toml", "rb") as f:
+        cfg = tomllib.load(f)
+    coord = cfg.get("coordinator", {})
+    return coord if coord.get("name") or coord.get("email") else {}

@@ -28,11 +28,11 @@ _DESCRIPTIONS = {
         "Parse one or more documents (PDF, DOCX, HTML, or plaintext) and add them "
         "to the system. The document type must be specified with --type. "
         "For students, --id and --program (or --p) are required. "
-        "For projects, --company is required. "
-        "Duplicate detection runs automatically: similar companies prompt for "
-        "merge-or-keep; similar projects from the same company prompt for "
-        "update-or-keep. Program codes are validated against the known list; "
-        "unrecognised codes trigger a typo check and offer to add a new entry."
+        "For projects, --company is required; tasks are defined interactively or "
+        "via a TOML sidecar (--tasks); coordinator assignment is offered after tasks. "
+        "For coordinators, documents (CV) are optional — if omitted the coordinator "
+        "is stored without an embedding. "
+        "Duplicate detection runs automatically for all types."
     ),
     "match": (
         "Compute cosine similarity between the target's embedding and all eligible "
@@ -99,6 +99,13 @@ _DESCRIPTIONS = {
         "If any active assignments exist, a confirmation is required before "
         "proceeding; all affected assignments are cancelled."
     ),
+    "assign-coordinator": (
+        "Attach or detach a coordinator from a project. "
+        "Coordinators are resolved by partial name or email — if ambiguous, "
+        "a numbered list is presented. "
+        "With no flags, shows the current coordinator(s) for the project, "
+        "falling back to the default coordinator from config if none are assigned."
+    ),
     "reassign": (
         "Move a student to a different semester. If the student has active "
         "assignments, you are asked whether this is an extension (keep current "
@@ -131,12 +138,16 @@ _EXAMPLES = {
     "ingest": [
         ("ingest cv.pdf --type s --id 2134567 --p GDIM --semester 2025-H",
          "Ingest a student CV."),
-        ("ingest cover.pdf --type s --id 2134567 --p GDIM",
-         "Add a cover letter to the same student."),
+        ("ingest cv.pdf cover.pdf --type s --id 2134567 --p GDIM",
+         "Ingest a CV and cover letter together for the same student."),
         ("ingest studio_noko_desc.pdf --type c",
          "Ingest a company description."),
         ("ingest refonte_ui.pdf --type p --company studio_noko --semester 2025-H",
-         "Ingest a project proposal."),
+         "Ingest a project proposal; tasks are prompted interactively."),
+        ("ingest cv.pdf --type coord",
+         "Ingest a coordinator with their CV for subject-matter matching."),
+        ("ingest --type coord",
+         "Ingest a coordinator with no documents (name and email only)."),
     ],
     "match": [
         ("match --student 2134567",
@@ -208,6 +219,14 @@ _EXAMPLES = {
         ("close studio_noko_refonte_ui_2025H",
          "Close a project, purge its documents, cancel active assignments."),
     ],
+    "assign-coordinator": [
+        ("assign-coordinator studio_noko_refonte_ui_2025H --add \"marie\"",
+         "Add a coordinator by partial name."),
+        ("assign-coordinator studio_noko_refonte_ui_2025H --remove \"tremblay\"",
+         "Remove a coordinator by partial name."),
+        ("assign-coordinator studio_noko_refonte_ui_2025H",
+         "Show current coordinators for a project."),
+    ],
     "reassign": [
         ("reassign 2134567 --semester 2025-A",
          "Move student to fall 2025; prompts extension or reset if assignments exist."),
@@ -244,6 +263,7 @@ _SEE_ALSO = {
     "activate":          ["innovhub-deactivate(1)"],
     "deactivate":        ["innovhub-activate(1)", "innovhub-complete(1)"],
     "complete":          ["innovhub-deactivate(1)"],
+    "assign-coordinator": ["innovhub-ingest(1)", "innovhub-status(1)"],
     "close":     ["innovhub-deactivate(1)", "innovhub-complete(1)"],
     "reassign":          ["innovhub-status(1)", "innovhub-remove(1)"],
     "explain":           ["innovhub-match(1)"],

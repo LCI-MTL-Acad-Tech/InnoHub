@@ -11,12 +11,15 @@ DIRS = [
     "data/students",
     "data/companies",
     "data/projects",
+    "data/coordinators",
     "data/documents/students",
     "data/documents/companies",
     "data/documents/projects",
+    "data/documents/coordinators",
     "data/embeddings/students",
     "data/embeddings/companies",
     "data/embeddings/projects",
+    "data/embeddings/coordinators",
     "man",
     "tests",
 ]
@@ -29,6 +32,19 @@ ASSIGNMENTS_HEADER = [
 ]
 
 PROGRAMS_HEADER = ["code", "label_fr", "label_en", "active"]
+
+SCHEMA_COORDINATOR = {
+    "_comment": "Reference schema — one file per coordinator: data/coordinators/<coordinator_id>.json",
+    "coordinator_id": "nom_prenom",
+    "name": "Prénom Nom",
+    "email": "prenom.nom@college-lasalle.qc.ca",
+    "programs": [],
+    "status": "active",
+    "documents": [],
+    "embedding_file": "",
+    "notes": ""
+}
+
 
 SCHEMA_STUDENT = {
     "_comment": "Reference schema — one file per student: data/students/<student_number>.json",
@@ -113,9 +129,10 @@ def bootstrap(verbose: bool = False) -> None:
     # ── SCHEMA reference files ────────────────────────────────────────────────
     import json
     schemas = {
-        "data/students/SCHEMA.json": SCHEMA_STUDENT,
-        "data/companies/SCHEMA.json": SCHEMA_COMPANY,
-        "data/projects/SCHEMA.json": SCHEMA_PROJECT,
+        "data/students/SCHEMA.json":     SCHEMA_STUDENT,
+        "data/companies/SCHEMA.json":    SCHEMA_COMPANY,
+        "data/projects/SCHEMA.json":     SCHEMA_PROJECT,
+        "data/coordinators/SCHEMA.json": SCHEMA_COORDINATOR,
     }
     for path_str, schema in schemas.items():
         path = Path(path_str)

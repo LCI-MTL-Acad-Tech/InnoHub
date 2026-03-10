@@ -39,6 +39,8 @@ def run_status(args):
         _status_project(args.project)
     elif args.company:
         _status_company(args.company)
+    elif getattr(args, "coordinator", None):
+        _status_coordinator(args.coordinator)
     elif args.all:
         from src.dashboard_cli import run as run_dash
         run_dash(args)
@@ -190,6 +192,94 @@ def _status_project(project_id: str) -> None:
         f"  Assignments: [green]{confirmed} confirmed[/green]"
         f"  [yellow]{proposed} proposed[/yellow]\n"
     )
+
+    # Coordinators
+    coord_ids = meta.get("coordinators", [])
+    if coord_ids:
+        names = []
+        for cid in coord_ids:
+            try:
+                c = load_json("coordinators", cid)
+                names.append(f"{c['name']} <{c['email']}>")
+            except Exception:
+                names.append(cid)
+        console.print("  [bold]Coordinators:[/bold]  " + "  ·  ".join(names))
+    else:
+        from src.store import default_coordinator
+        dc = default_coordinator()
+        if dc:
+            console.print(
+                f"  [bold]Coordinator:[/bold]  [dim](none assigned — de facto: "
+                f"{dc['name']} <{dc['email']}>)[/dim]"
+            )
+    console.print()
+
+
+def _status_coordinator(query: str) -> None:
+    from rich.console import Console
+    from rich.table import Table
+    from rich import box
+    from src.store import load_json, list_ids
+    from src.coordinator import resolve_coordinator
+
+    console = Console()
+
+    coord = resolve_coordinator(query)
+    if coord is None:
+        return
+
+    cid    = coord["coordinator_id"]
+    progs  = ", ".join(coord.get("programs", [])) or "all programs"
+    status_colour = "green" if coord.get("status") == "active" else "yellow"
+
+    console.print(
+        f"\n  [bold]{coord['name']}[/bold]  <{coord['email']}>"
+        f"  ·  [{status_colour}]{coord.get('status', 'active')}[/{status_colour}]"
+        f"  ·  Programs: {progs}\n"
+    )
+
+    # Find all projects assigned to this coordinator
+    assigned = [
+        pid for pid in list_ids("projects")
+        if cid in load_json("projects", pid).get("coordinators", [])
+    ]
+
+    if not assigned:
+        console.print("  [dim]No projects assigned.[/dim]\n")
+        return
+
+    table = Table(box=box.SIMPLE_HEAD, show_header=True, header_style="bold")
+    table.add_column("Project",   style="white",  min_width=30)
+    table.add_column("Company",   style="dim",    min_width=18)
+    table.add_column("Semester",  style="cyan",   width=10)
+    table.add_column("Status",    style="yellow", width=10)
+    table.add_column("Fill",      style="green",  justify="right")
+
+    for pid in assigned:
+        try:
+            pmeta   = load_json("projects", pid)
+            cmeta   = load_json("companies", pmeta["company_id"])
+            company = cmeta["name"]
+        except Exception:
+            company = pmeta.get("company_id", "—")
+
+        total   = pmeta["capacity"]["total_hours"]
+        from src.store import load_assignments
+        rows    = load_assignments()
+        filled  = sum(
+            int(r["hours_planned"]) for r in rows
+            if r["project_id"] == pid
+            and r["status"] in {"proposed", "confirmed"}
+        )
+        table.add_row(
+            pmeta["title"],
+            company,
+            pmeta["semester"],
+            pmeta["status"],
+            f"{filled}/{total}h",
+        )
+
+    console.print(table)
 
 
 def _status_company(company_name: str) -> None:
