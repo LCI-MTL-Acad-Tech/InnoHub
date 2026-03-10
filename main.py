@@ -4,6 +4,7 @@ All commands are defined here; logic lives in src/.
 """
 import argparse
 import sys
+from pathlib import Path
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -136,13 +137,21 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main():
     from src.setup_wizard import needs_setup, run_wizard
-    from src.bootstrap import bootstrap
 
-    # First-run: no arguments and data/ absent → offer guided setup
+    # First-run: config.toml absent or data/ empty → offer guided setup
     if len(sys.argv) == 1 and needs_setup():
         run_wizard()
         return
 
+    # config.toml must exist before bootstrap (which reads it)
+    if not Path("config.toml").exists():
+        print(
+            "  config.toml not found.\n"
+            "  Run python main.py with no arguments to complete setup first."
+        )
+        sys.exit(1)
+
+    from src.bootstrap import bootstrap
     bootstrap()
 
     parser = build_parser()
