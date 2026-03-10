@@ -10,6 +10,7 @@ from src.store import (
     load_assignments, rewrite_assignments,
 )
 from src.models import PROJECT_STATUSES, STUDENT_STATUSES, COMPANY_STATUSES
+from src.audit import log as audit_log
 
 
 TODAY = date.today().isoformat()
@@ -91,15 +92,22 @@ def run(args):
     elif args.project:
         _set_project_status(args.project, "active" if cmd == "activate" else "inactive")
     elif args.company:
-        _set_company_status(args.company, "active" if cmd == "activate" else "inactive")
+        _set_company_status(args.company, "active" if cmd == "activate" else "inactive", args)
 
 
 def _set_student_status(student_number: str, new_status: str) -> None:
     from rich.console import Console
     console = Console()
 
-    meta = load_json("students", student_number)
+    meta       = load_json("students", student_number)
     old_status = meta["status"]
+
+    if new_status == "active" and old_status == "completed":
+        console.print(
+            f"  [yellow]{meta['name']} is marked completed — "
+            f"documents have been purged. Re-ingest documents before activating.[/yellow]"
+        )
+        return
 
     if new_status == "inactive" and old_status == "active":
         rows = load_assignments()
@@ -114,6 +122,7 @@ def _set_student_status(student_number: str, new_status: str) -> None:
 
     meta["status"] = new_status
     save_json("students", student_number, meta)
+    audit_log(new_status, "students", student_number)
     console.print(f"  ✓ {meta['name']} → [bold]{new_status}[/bold]")
 
 
@@ -137,10 +146,11 @@ def _set_project_status(project_id: str, new_status: str) -> None:
 
     meta["status"] = new_status
     save_json("projects", project_id, meta)
+    audit_log(new_status, "projects", project_id)
     console.print(f"  ✓ {meta['title']} → [bold]{new_status}[/bold]")
 
 
-def _set_company_status(company_name: str, new_status: str) -> None:
+def _set_company_status(company_name: str, new_status: str, args=None) -> None:
     from rich.console import Console
     from src.fuzzy import ranked_matches
     console = Console()
@@ -199,14 +209,18 @@ def _set_company_status(company_name: str, new_status: str) -> None:
     # Log activation history
     history = meta.get("activation_history", [])
     if new_status == "active":
-        history.append({"semester": args_semester if hasattr(run, "_semester") else "",
-                        "activated_date": TODAY, "deactivated_date": None})
+        history.append({
+            "semester":         getattr(args, "semester", "") or "",
+            "activated_date":   TODAY,
+            "deactivated_date": None,
+        })
     elif new_status == "inactive" and history:
         history[-1]["deactivated_date"] = TODAY
 
     meta["activation_history"] = history
     meta["status"] = new_status
     save_json("companies", company_id, meta)
+    audit_log(new_status, "companies", company_id)
     console.print(f"  ✓ {meta['name']} → [bold]{new_status}[/bold]")
 
 
@@ -244,6 +258,8 @@ def run_close(args):
     meta["status"] = "closed"
     save_json("projects", args.project, meta)
 
+    audit_log("close", "projects", args.project,
+              files_purged=removed)
     console.print(f"  ✓ {removed} document(s) purged")
     console.print(f"  ✓ {meta['title']} → [bold]closed[/bold]")
     console.print(f"  [dim]Assignment history retained in CSV.[/dim]")
@@ -292,6 +308,8 @@ def run_complete(args):
     meta["status"] = "completed"
     save_json("students", args.student_number, meta)
 
+    audit_log("complete", "students", args.student_number,
+              files_purged=removed)
     console.print(f"  ✓ {removed} document(s) and embedding purged")
     console.print(f"  ✓ {meta['name']} → [bold]completed[/bold]")
     console.print(f"  [dim]Assignment history retained in CSV.[/dim]")
@@ -309,7 +327,12 @@ def run_reassign(args):
 
     meta        = load_json("students", args.student_number)
     old_semester = meta["semester_start"]
-    new_semester = args.semester
+    from src.semester import parse as parse_semester, prompt as prompt_semester
+    import types
+    sem_obj = parse_semester(args.semester) or prompt_semester(
+        types.SimpleNamespace(semester=args.semester)
+    )
+    new_semester = sem_obj.to_storage()
 
     if old_semester == new_semester:
         console.print(f"  [yellow]{meta['name']} is already in {new_semester}.[/yellow]")
@@ -354,4 +377,8 @@ def run_reassign(args):
     meta["semester_start"] = new_semester
     save_json("students", args.student_number, meta)
 
+    audit_log("reassign", "students", args.student_number,
+              from_semester=old_semester,
+              to_semester=new_semester,
+              kind=kind)
     console.print(f"  ✓ {meta['name']} → [bold]{new_semester}[/bold]  ({kind})")

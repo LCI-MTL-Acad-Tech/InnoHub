@@ -16,7 +16,8 @@ config.toml
 *.html
 
 # Output data — never commit
-*.csv
+data/*.csv
+data/audit.log
 
 # Python
 __pycache__/

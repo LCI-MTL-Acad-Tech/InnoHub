@@ -74,7 +74,7 @@ _DESCRIPTIONS = {
         "(active projects and fill rate). Use --all for a global overview."
     ),
     "list": (
-        "Tabulate all students, projects, or companies. Filter by semester with "
+        "Tabulate all students, projects, companies, or coordinators. Filter by semester with "
         "--semester. Include inactive records with --inactive."
     ),
     "activate": (
@@ -99,7 +99,7 @@ _DESCRIPTIONS = {
         "If any active assignments exist, a confirmation is required before "
         "proceeding; all affected assignments are cancelled."
     ),
-    "assign-coordinator": (
+    "coord": (
         "Attach or detach a coordinator from a project. "
         "Coordinators are resolved by partial name or email — if ambiguous, "
         "a numbered list is presented. "
@@ -123,14 +123,18 @@ _DESCRIPTIONS = {
     ),
     "dashboard": (
         "Display a live terminal dashboard showing placement rates per study "
-        "program, project fill status per company, and the list of unplaced "
-        "students. Filter to a specific semester with --semester."
+        "program, project fill status per company, semester breakdown, and the "
+        "list of unplaced students. Filter to a specific semester with --semester. "
+        "Use --group-by academic to group semesters by academic year (AY2024-2025) "
+        "instead of calendar year. If the academic year start is the first term in "
+        "the configured term list, the two groupings are equivalent."
     ),
     "web": (
         "Start a local HTTP server (bound to 127.0.0.1 only) and open a visual "
         "dashboard in the browser. The dashboard queries live JSON endpoints and "
         "allows browsing student, project, and company records with links to their "
-        "source documents. No data leaves the machine."
+        "source documents. Use --group-by academic to toggle academic year grouping. "
+        "No data leaves the machine."
     ),
 }
 
@@ -219,12 +223,12 @@ _EXAMPLES = {
         ("close studio_noko_refonte_ui_2025H",
          "Close a project, purge its documents, cancel active assignments."),
     ],
-    "assign-coordinator": [
-        ("assign-coordinator studio_noko_refonte_ui_2025H --add \"marie\"",
+    "coord": [
+        ("coord studio_noko_refonte_ui_2025H --add \"marie\"",
          "Add a coordinator by partial name."),
-        ("assign-coordinator studio_noko_refonte_ui_2025H --remove \"tremblay\"",
+        ("coord studio_noko_refonte_ui_2025H --remove \"tremblay\"",
          "Remove a coordinator by partial name."),
-        ("assign-coordinator studio_noko_refonte_ui_2025H",
+        ("coord studio_noko_refonte_ui_2025H",
          "Show current coordinators for a project."),
     ],
     "reassign": [
@@ -263,7 +267,7 @@ _SEE_ALSO = {
     "activate":          ["innovhub-deactivate(1)"],
     "deactivate":        ["innovhub-activate(1)", "innovhub-complete(1)"],
     "complete":          ["innovhub-deactivate(1)"],
-    "assign-coordinator": ["innovhub-ingest(1)", "innovhub-status(1)"],
+    "coord": ["innovhub-ingest(1)", "innovhub-status(1)"],
     "close":     ["innovhub-deactivate(1)", "innovhub-complete(1)"],
     "reassign":          ["innovhub-status(1)", "innovhub-remove(1)"],
     "explain":           ["innovhub-match(1)"],

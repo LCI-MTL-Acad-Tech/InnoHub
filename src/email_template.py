@@ -1,6 +1,7 @@
 """
 email_template.py — generate draft assignment notification emails.
 Templates are in Canadian French and Canadian English.
+Coordinators are CC'd if assigned to the project.
 No email is ever sent automatically.
 """
 
@@ -37,21 +38,23 @@ def render_email(
     project_title: str,
     company_name: str,
     semester: str,
+    coordinator_emails: list[str] | None = None,
 ) -> dict:
     lang = language if language in _TEMPLATES else "fr"
     tmpl = _TEMPLATES[lang]
 
     context = {
-        "student_first": student_name.split()[0],
-        "lead_first":    lead_name.split()[0],
+        "student_first": student_name.split()[0] if student_name else "",
+        "lead_first":    lead_name.split()[0]    if lead_name    else "",
         "project_title": project_title,
         "company_name":  company_name,
         "semester":      semester,
     }
 
     return {
-        "to":      [student_email, lead_email],
-        "subject": tmpl["subject"].format(**context),
-        "body":    tmpl["body"].format(**context),
-        "language": lang,
+        "to":          [student_email, lead_email],
+        "cc":          coordinator_emails or [],
+        "subject":     tmpl["subject"].format(**context),
+        "body":        tmpl["body"].format(**context),
+        "language":    lang,
     }

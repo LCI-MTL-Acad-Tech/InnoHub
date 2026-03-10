@@ -22,7 +22,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     # ── ingest ────────────────────────────────────────────────────────────────
     p_ingest = sub.add_parser("ingest", help="Add documents to the system.")
-    p_ingest.add_argument("files", nargs="+", metavar="FILE")
+    p_ingest.add_argument("files", nargs="*", metavar="FILE",
+                          help="Document files. Optional for --type coord.")
     p_ingest.add_argument(
         "--type", "-t", required=True,
         choices=["s", "student", "c", "company", "p", "project", "coord", "coordinator"],
@@ -39,8 +40,9 @@ def build_parser() -> argparse.ArgumentParser:
     target = p_match.add_mutually_exclusive_group(required=True)
     target.add_argument("--student",  metavar="STUDENT_NUMBER")
     target.add_argument("--company",  metavar="NAME")
+    target.add_argument("--search",   metavar="QUERY",
+                        help="Search students by name or email regex, then match.")
     p_match.add_argument("--project", metavar="PROJECT_ID")
-    p_match.add_argument("--search",  metavar="QUERY", help="Regex search on student name or email.")
     p_match.add_argument("--n",       metavar="N",   type=int, default=5)
     p_match.add_argument("--all",     action="store_true")
     p_match.add_argument("--semester",metavar="TAG")
@@ -79,15 +81,15 @@ def build_parser() -> argparse.ArgumentParser:
     s_target.add_argument("--all",         action="store_true")
     p_status.add_argument("--search",      metavar="QUERY")
 
-    # ── assign-coordinator ────────────────────────────────────────────────────
-    p_ac = sub.add_parser("assign-coordinator", help="Attach or detach a coordinator from a project.")
+    # ── coord ─────────────────────────────────────────────────────────────────
+    p_ac = sub.add_parser("coord", help="Attach or detach a coordinator from a project.")
     p_ac.add_argument("project_id",  metavar="PROJECT_ID")
     p_ac.add_argument("--add",       metavar="NAME_OR_EMAIL", help="Coordinator to add.")
     p_ac.add_argument("--remove",    metavar="NAME_OR_EMAIL", help="Coordinator to remove.")
 
     # ── list ──────────────────────────────────────────────────────────────────
-    p_list = sub.add_parser("list", help="List students, projects, or companies.")
-    p_list.add_argument("what", choices=["students", "projects", "companies"])
+    p_list = sub.add_parser("list", help="List students, projects, companies, or coordinators.")
+    p_list.add_argument("what", choices=["students", "projects", "companies", "coordinators"])
     p_list.add_argument("--semester", metavar="TAG")
     p_list.add_argument("--inactive", action="store_true")
 
@@ -125,12 +127,43 @@ def build_parser() -> argparse.ArgumentParser:
 
     # ── dashboard ─────────────────────────────────────────────────────────────
     p_dash = sub.add_parser("dashboard", help="Show CLI dashboard.")
-    p_dash.add_argument("--semester", metavar="TAG")
+    # Filters
+    p_dash.add_argument("--semester",    metavar="TAG",    action="append",
+                        help="Filter by semester (repeatable).")
+    p_dash.add_argument("--year",        metavar="YYYY",   type=int, action="append",
+                        help="Filter by calendar year (repeatable).")
+    p_dash.add_argument("--company",     metavar="NAME",   action="append",
+                        help="Filter by company name (repeatable, fuzzy).")
+    p_dash.add_argument("--program",     metavar="CODE",   action="append",
+                        help="Filter by student program code (repeatable).")
+    p_dash.add_argument("--coordinator", metavar="NAME",   action="append",
+                        help="Filter by coordinator name or email (repeatable, fuzzy).")
+    p_dash.add_argument("--language",    metavar="LANG",   choices=["fr", "en"],
+                        help="Filter by project language.")
+    p_dash.add_argument("--status",      metavar="STATUS", action="append",
+                        choices=["proposed","confirmed","unassigned",
+                                 "active","inactive","closed","completed"],
+                        help="Filter by status (repeatable).")
+    p_dash.add_argument("--unplaced",       action="store_true",
+                        help="Show only students with no confirmed assignment.")
+    p_dash.add_argument("--unfilled",       action="store_true",
+                        help="Show only projects with remaining hours.")
+    p_dash.add_argument("--no-coordinator", action="store_true",
+                        help="Show only projects with no coordinator assigned.")
+    # Grouping and sorting
+    p_dash.add_argument("--group-by",  metavar="KEY",
+                        help="Group by: year, academic-year, semester, company, program, coordinator (comma-separated for nested).")
+    p_dash.add_argument("--sort-by",   metavar="KEY",
+                        choices=["name","semester","fill-rate","hours","program","company"],
+                        help="Sort results by this key.")
 
     # ── web ───────────────────────────────────────────────────────────────────
     p_web = sub.add_parser("web", help="Start local web dashboard (http://127.0.0.1:8080).")
     p_web.add_argument("--port",     metavar="PORT", type=int, default=8080)
     p_web.add_argument("--semester", metavar="TAG")
+    p_web.add_argument("--group-by", metavar="MODE", choices=["calendar", "academic"],
+                       default="calendar",
+                       help="Group semesters by calendar year or academic year. Default: calendar.")
 
     return parser
 
@@ -174,7 +207,7 @@ def main():
     elif cmd == "confirm":           from src.assign        import run_confirm;   run_confirm(args)
     elif cmd == "edit":              from src.assign        import run_edit;      run_edit(args)
     elif cmd == "remove":            from src.assign        import run_remove;    run_remove(args)
-    elif cmd == "assign-coordinator": from src.coordinator   import run_assign_coordinator; run_assign_coordinator(args)
+    elif cmd == "coord":             from src.coordinator   import run_assign_coordinator; run_assign_coordinator(args)
     elif cmd == "status":            from src.match         import run_status;    run_status(args)
     elif cmd == "list":              from src.match         import run_list;      run_list(args)
     elif cmd in ("activate",

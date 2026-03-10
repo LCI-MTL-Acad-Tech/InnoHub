@@ -25,6 +25,8 @@ def save_json(kind: str, entity_id: str, data: dict) -> None:
 
 def list_ids(kind: str) -> list[str]:
     folder = Path(PATHS[kind])
+    if not folder.exists():
+        return []
     return [p.stem for p in folder.glob("*.json") if p.stem != "SCHEMA"]
 
 def load_programs() -> list[dict]:
@@ -88,3 +90,8 @@ def default_coordinator() -> dict:
         cfg = tomllib.load(f)
     coord = cfg.get("coordinator", {})
     return coord if coord.get("name") or coord.get("email") else {}
+
+def validate_semester(tag: str) -> bool:
+    """Return True if tag matches expected format: YYYY-H or YYYY-A."""
+    import re
+    return bool(re.fullmatch(r"\d{4}-[HA]", tag.strip()))

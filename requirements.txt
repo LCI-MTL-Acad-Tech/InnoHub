@@ -16,7 +16,7 @@ rapidfuzz>=3.6
 langdetect>=1.0.9
 
 # Config
-tomllib>=2.0; python_version < "3.11"  # built-in from 3.11 onwards
+tomli>=2.0; python_version < "3.11"  # built-in as tomllib from 3.11 onwards
 
 # CLI formatting
 rich>=13.7

@@ -34,8 +34,8 @@ ASSIGNMENTS_HEADER = [
 PROGRAMS_HEADER = ["code", "label_fr", "label_en", "active"]
 
 SCHEMA_COORDINATOR = {
-    "_comment": "Reference schema — one file per coordinator: data/coordinators/<coordinator_id>.json",
-    "coordinator_id": "nom_prenom",
+    "_comment": "Reference schema — one file per coordinator: data/coordinators/<email>.json",
+    "coordinator_id": "prenom.nom@college-lasalle.qc.ca",
     "name": "Prénom Nom",
     "email": "prenom.nom@college-lasalle.qc.ca",
     "programs": [],
@@ -52,7 +52,7 @@ SCHEMA_STUDENT = {
     "name": "Prénom Nom",
     "email": "prenom.nom@college-lasalle.qc.ca",
     "program": "GDIM",
-    "semester_start": "2025-H",
+    "semester_start": "Fall 2025",
     "hours_available": 135,
     "status": "active",
     "reassignment_history": [],
@@ -81,7 +81,7 @@ SCHEMA_PROJECT = {
     "company_id": "nom_entreprise",
     "title": "Titre du projet",
     "status": "active",
-    "semester": "2025-H",
+    "semester": "Fall 2025",
     "language": "fr",
     "capacity": {
         "total_hours": 0,
@@ -126,7 +126,11 @@ def bootstrap(verbose: bool = False) -> None:
             csv.DictWriter(f, fieldnames=PROGRAMS_HEADER).writeheader()
         log("created  data/programs.csv")
 
-    # ── SCHEMA reference files ────────────────────────────────────────────────
+    # ── audit.log ─────────────────────────────────────────────────────────────
+    audit = Path("data/audit.log")
+    if not audit.exists():
+        audit.touch()
+        log("created  data/audit.log")
     import json
     schemas = {
         "data/students/SCHEMA.json":     SCHEMA_STUDENT,

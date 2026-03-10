@@ -17,6 +17,7 @@ from src.parse import parse_file
 from src.embed import embed_text, save_embedding, cosine_similarity, load_embedding
 from src.language import detect_language
 from src.fuzzy import detect_program_typo, ranked_matches
+from src.audit import log as audit_log
 
 TODAY = date.today().isoformat()
 
@@ -30,13 +31,18 @@ PATHS           = _CFG["paths"]
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 def run(args) -> None:
-    kind = _resolve_type(args.type)
+    kind  = _resolve_type(args.type)
     files = [Path(f) for f in args.files]
+
+    # Coordinators may be ingested with no documents
+    if kind != "coordinator" and not files:
+        print("  At least one file is required for this document type.")
+        return
 
     for f in files:
         if not f.exists():
-            print(f"  [red]File not found: {f}[/red]")
-            continue
+            print(f"  File not found: {f}")
+            return
 
     if kind == "student":
         _ingest_student(files, args)
@@ -80,19 +86,50 @@ def _find_similar(kind: str, vector, exclude_id: str = "") -> list[tuple[str, fl
     return sorted(results, key=lambda x: x[1], reverse=True)
 
 
-def _save_documents(kind: str, entity_id: str, files: list[Path], doc_type: str) -> list[dict]:
-    """Copy source files into data/documents/<kind>/ and return document records."""
+def _canonical_filename(entity_id: str, doc_type: str, original: Path) -> str:
+    """
+    Build a canonical filename: <entity_id_safe>_<doc_type_safe><ext>
+    - entity_id: student number, company slug, or coordinator email-safe slug
+    - doc_type:  cv, cover_letter, company_description, project_proposal
+    - ext:       preserved from original file
+    """
+    safe_id   = entity_id.replace("@", "_").replace(".", "_")
+    safe_type = doc_type.replace(" ", "_").lower()
+    return f"{safe_id}_{safe_type}{original.suffix.lower()}"
+
+
+def _save_documents(
+    kind: str,
+    entity_id: str,
+    files: list[Path],
+    doc_type: str,
+    old_filenames: list[str] | None = None,
+) -> list[dict]:
+    """
+    Copy source files into data/documents/<kind>/ with canonical names.
+    Deletes old files if old_filenames is provided (replace flow).
+    Returns document records.
+    """
     import shutil
     doc_dir = Path(PATHS["documents"]) / kind
     doc_dir.mkdir(parents=True, exist_ok=True)
+
+    # Remove old files if replacing
+    if old_filenames:
+        for fname in old_filenames:
+            old_path = doc_dir / fname
+            if old_path.exists():
+                old_path.unlink()
+
     records = []
     for f in files:
-        dest = doc_dir / f.name
-        if dest != f:
+        dest_name = _canonical_filename(entity_id, doc_type, f)
+        dest      = doc_dir / dest_name
+        if dest.resolve() != f.resolve():
             shutil.copy(f, dest)
         records.append({
-            "type": doc_type,
-            "filename": f.name,
+            "type":          doc_type,
+            "filename":      dest_name,
             "ingested_date": TODAY,
         })
     return records
@@ -184,15 +221,13 @@ def _ingest_student(files: list[Path], args) -> None:
         hours_available = 135
         console.print(f"  Invalid input — defaulting to {hours_available}h.")
 
-    semester = getattr(args, "semester", None) or input("  Semester (e.g. 2025-H): ").strip()
+    semester = _prompt_semester(args)
 
-    # ── Determine document type ───────────────────────────────────────────────
-    doc_type = "cv" if len(files) == 1 else "cv"  # first file assumed CV
-    doc_records = _save_documents("students", student_number, files, doc_type)
-    if len(files) > 1:
-        doc_records[0]["type"] = "cv"
-        for r in doc_records[1:]:
-            r["type"] = "cover_letter"
+    # ── Determine document type and save ─────────────────────────────────────
+    doc_records = []
+    for i, f in enumerate(files):
+        dtype = "cv" if i == 0 else "cover_letter"
+        doc_records += _save_documents("students", student_number, [f], dtype)
 
     emb_path = _save_emb("students", student_number, vector)
 
@@ -210,6 +245,8 @@ def _ingest_student(files: list[Path], args) -> None:
         "notes":                "",
     }
     save_json("students", student_number, meta)
+    audit_log("ingest", "students", student_number,
+              files=[r["filename"] for r in doc_records])
     console.print(f"  ✓ Student {student_number} ({name}) ingested.")
 
 
@@ -219,16 +256,23 @@ def _replace_student_docs(student_number: str, files: list[Path], meta: dict, co
     text, vector = _parse_and_embed(files)
     console.print("✓")
 
-    doc_records = _save_documents("students", student_number, files, "cv")
-    if len(files) > 1:
-        doc_records[0]["type"] = "cv"
-        for r in doc_records[1:]:
-            r["type"] = "cover_letter"
+    old_filenames = [d["filename"] for d in meta.get("documents", [])]
+
+    doc_records = []
+    for i, f in enumerate(files):
+        dtype = "cv" if i == 0 else "cover_letter"
+        # Pass old_filenames only on first iteration to avoid double-delete
+        old = old_filenames if i == 0 else None
+        doc_records += _save_documents("students", student_number, [f], dtype,
+                                       old_filenames=old)
 
     emb_path = _save_emb("students", student_number, vector)
     meta["documents"]      = doc_records
     meta["embedding_file"] = emb_path
     save_json("students", student_number, meta)
+    audit_log("replace", "students", student_number,
+              old_files=old_filenames,
+              new_files=[r["filename"] for r in doc_records])
     console.print(f"  ✓ Documents updated for {meta['name']}.")
 
 
@@ -242,6 +286,8 @@ def _add_new_program(code: str, programs: list[dict]) -> str:
         "active":   "true",
     })
     save_programs(programs)
+    audit_log("add_program", "programs", code,
+              label_fr=label_fr, label_en=label_en)
     print(f"  ✓ Program '{code}' added.")
     return code
 
@@ -295,6 +341,8 @@ def _ingest_company(files: list[Path], args) -> None:
         "notes":              "",
     }
     save_json("companies", company_id, meta)
+    audit_log("ingest", "companies", company_id,
+              files=[r["filename"] for r in doc_records])
     console.print(f"  ✓ Company '{name}' ingested (id: {company_id}).")
 
 
@@ -305,7 +353,9 @@ def _merge_company(company_id: str, meta: dict, files: list[Path], vector, conso
     meta["documents"].extend(new_docs)
     meta["embedding_file"] = emb_path
     save_json("companies", company_id, meta)
-    console.print(f"  ✓ Merged into '{meta['name']}'.")
+    audit_log("replace", "companies", company_id,
+              files=[r["filename"] for r in new_docs])
+    console.print(f"  ✓ Merged into '{meta['name']}' — documents updated.")
 
 
 # ── Project ingest ────────────────────────────────────────────────────────────
@@ -370,7 +420,7 @@ def _ingest_project(files: list[Path], args) -> None:
     if not lead_name:
         lead_name = input("  Project lead name: ").strip()
 
-    semester = getattr(args, "semester", None) or input("  Semester (e.g. 2025-H): ").strip()
+    semester = _prompt_semester(args)
 
     # ── Task definition ───────────────────────────────────────────────────────
     tasks = _define_tasks(args, console)
@@ -402,6 +452,9 @@ def _ingest_project(files: list[Path], args) -> None:
 
     meta = {**_temp_meta, "coordinators": coordinator_ids}
     save_json("projects", project_id, meta)
+    audit_log("ingest", "projects", project_id,
+              files=[r["filename"] for r in doc_records],
+              company=company_id)
     console.print(f"  ✓ Project '{title}' ingested (id: {project_id}).")
 
 
@@ -411,7 +464,8 @@ def _renew_project(
 ) -> None:
     """Replace documents and re-embed an existing project; log renewal history."""
     old_docs = [d["filename"] for d in meta.get("documents", [])]
-    new_docs = _save_documents("projects", project_id, files, "project_proposal")
+    new_docs = _save_documents("projects", project_id, files, "project_proposal",
+                               old_filenames=old_docs)
     emb_path = _save_emb("projects", project_id, vector)
 
     meta.setdefault("renewal_history", []).append({
@@ -434,6 +488,9 @@ def _renew_project(
             }
 
     save_json("projects", project_id, meta)
+    audit_log("replace", "projects", project_id,
+              old_files=old_docs,
+              new_files=[r["filename"] for r in new_docs])
     console.print(f"  ✓ Project '{meta['title']}' renewed.")
 
 
@@ -573,12 +630,24 @@ def _ingest_coordinator(files: list[Path], args) -> None:
     programs = [p.strip().upper() for p in programs_raw.split(",") if p.strip()] \
                if programs_raw else []
 
-    coordinator_id = _slugify(name)
+    coordinator_id = email   # email is the unique key
 
     # ── Duplicate detection ───────────────────────────────────────────────────
-    from src.coordinator import resolve_coordinator as _resolve
     existing = list_ids("coordinators")
     if existing:
+        # Exact email match → always update
+        if email in existing:
+            answer = input(
+                f"  Coordinator with email {email} already exists. "
+                f"Update? [Y/n]: "
+            ).strip().lower()
+            if answer not in ("", "y"):
+                console.print("  Aborted.")
+                return
+            _update_coordinator(email, files, vector, has_docs, programs, console)
+            return
+
+        # Fuzzy name match → offer merge
         from src.fuzzy import ranked_matches
         existing_names = {
             cid: load_json("coordinators", cid)["name"]
@@ -589,7 +658,7 @@ def _ingest_coordinator(files: list[Path], args) -> None:
             top_name = matches[0][0]
             top_id   = next(k for k, v in existing_names.items() if v == top_name)
             answer = input(
-                f"  Similar coordinator already exists: {top_name}. "
+                f"  Similar coordinator already exists: {top_name} ({top_id}). "
                 f"Update or keep separate? [u/K]: "
             ).strip().lower()
             if answer == "u":
@@ -613,6 +682,9 @@ def _ingest_coordinator(files: list[Path], args) -> None:
         "notes":          "",
     }
     save_json("coordinators", coordinator_id, meta)
+    audit_log("add_coordinator", "coordinators", coordinator_id,
+              name=name,
+              files=[r["filename"] for r in doc_records])
     console.print(f"  ✓ Coordinator '{name}' ingested (id: {coordinator_id}).")
 
 
@@ -629,10 +701,17 @@ def _update_coordinator(
     if programs:
         meta["programs"] = programs
     save_json("coordinators", coordinator_id, meta)
+    audit_log("replace", "coordinators", coordinator_id,
+              files=[r["filename"] for r in (meta.get("documents") or [])])
     console.print(f"  ✓ Coordinator '{meta['name']}' updated.")
 
 
 # ── Utility ───────────────────────────────────────────────────────────────────
+
+def _prompt_semester(args) -> str:
+    """Prompt for a semester, normalise it, return canonical storage string."""
+    from src.semester import prompt
+    return prompt(args).to_storage()
 
 def _slugify(text: str) -> str:
     text = text.lower().strip()
