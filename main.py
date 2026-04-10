@@ -90,8 +90,21 @@ def build_parser() -> argparse.ArgumentParser:
     # ── list ──────────────────────────────────────────────────────────────────
     p_list = sub.add_parser("list", help="List students, projects, companies, or coordinators.")
     p_list.add_argument("what", choices=["students", "projects", "companies", "coordinators"])
-    p_list.add_argument("--semester", metavar="TAG")
-    p_list.add_argument("--inactive", action="store_true")
+    p_list.add_argument("--semester",        metavar="TAG")
+    p_list.add_argument("--inactive",        action="store_true")
+    p_list.add_argument("--pending-program", action="store_true",
+                        help="Show only students with an unresolved program code (420.?? or 570.??).")
+
+    # ── import ────────────────────────────────────────────────────────────────
+    p_imp = sub.add_parser("import", help="Bulk-import students and projects from a raw/ folder.")
+    p_imp.add_argument("--dir",      metavar="PATH", required=True,
+                       help="Path to the raw/ folder containing students.csv, projects.csv, CV/, CL/, Desc/.")
+    p_imp.add_argument("--semester", metavar="TAG", required=True,
+                       help="Semester for all imported entities (e.g. 'Winter 2026').")
+    p_imp.add_argument("--hours",    metavar="N",   type=int, default=135,
+                       help="Default hours available per student. Default: 135.")
+    p_imp.add_argument("--dry-run",  action="store_true",
+                       help="Parse and validate without writing anything to disk.")
 
     # ── activate / deactivate ─────────────────────────────────────────────────
     for cmd in ("activate", "deactivate"):
@@ -210,6 +223,7 @@ def main():
     elif cmd == "coord":             from src.coordinator   import run_assign_coordinator; run_assign_coordinator(args)
     elif cmd == "status":            from src.match         import run_status;    run_status(args)
     elif cmd == "list":              from src.match         import run_list;      run_list(args)
+    elif cmd == "import":            from src.bulk_import   import run;           run(args)
     elif cmd in ("activate",
                  "deactivate"):      from src.lifecycle     import run;           run(args)
     elif cmd == "close":             from src.lifecycle     import run_close;     run_close(args)
