@@ -49,7 +49,7 @@ def append_assignment_rows(rows: list[dict]) -> None:
     with open(path, "a", newline="") as f:
         fieldnames = [
             "assignment_id", "student_number", "student_email", "student_program",
-            "project_id", "project_lead_email", "semester", "task_id", "task_label",
+            "project_id", "project_lead_email", "semester", "team", "task_id", "task_label",
             "hours_planned", "hours_committed", "status", "assigned_date",
             "confirmed_date", "completed_date", "notes"
         ]
@@ -63,7 +63,7 @@ def rewrite_assignments(rows: list[dict]) -> None:
     path = Path(PATHS["assignments"])
     fieldnames = [
         "assignment_id", "student_number", "student_email", "student_program",
-        "project_id", "project_lead_email", "semester", "task_id", "task_label",
+        "project_id", "project_lead_email", "semester", "team", "task_id", "task_label",
         "hours_planned", "hours_committed", "status", "assigned_date",
         "confirmed_date", "completed_date", "notes"
     ]
@@ -91,7 +91,70 @@ def default_coordinator() -> dict:
     coord = cfg.get("coordinator", {})
     return coord if coord.get("name") or coord.get("email") else {}
 
+def project_fill(project_meta: dict, rows: list[dict]) -> dict:
+    """
+    Compute fill state for a project, aware of competing teams.
+
+    Returns:
+      {
+        "n_teams":       int,          # 1 for single-team
+        "total_hours":   int,          # per-team capacity
+        "teams": {
+            "A": {"filled": int, "remaining": int, "students": [str, ...]},
+            ...
+        },
+        "filled_total":  int,          # sum across all teams
+        "capacity_total":int,          # total_hours × n_teams
+        "fill_pct":      float,        # 0–1 across all teams
+        "has_open_slot": bool,         # any team has remaining hours
+      }
+    """
+    pid        = project_meta["project_id"]
+    n_teams    = int(project_meta.get("teams", 1))
+    total_hrs  = project_meta.get("capacity", {}).get("total_hours", 0)
+
+    # Collect active rows for this project
+    active = [
+        r for r in rows
+        if r["project_id"] == pid
+        and r["status"] in {"proposed", "confirmed"}
+    ]
+
+    # Determine which team labels are actually in use
+    if n_teams <= 1:
+        labels = [""]
+    else:
+        used_labels = sorted({r.get("team", "A") for r in active})
+        std_labels  = [chr(ord("A") + i) for i in range(n_teams)]
+        # Ensure at least the standard labels are present
+        labels = sorted(set(std_labels) | set(used_labels))
+
+    teams: dict[str, dict] = {}
+    for label in labels:
+        team_rows = [r for r in active if r.get("team", "") == label]
+        filled    = sum(int(r.get("hours_planned", 0)) for r in team_rows)
+        students  = list({r["student_number"] for r in team_rows})
+        teams[label] = {
+            "filled":    filled,
+            "remaining": max(0, total_hrs - filled),
+            "students":  students,
+        }
+
+    filled_total   = sum(t["filled"]    for t in teams.values())
+    capacity_total = total_hrs * max(1, n_teams)
+
+    return {
+        "n_teams":        n_teams,
+        "total_hours":    total_hrs,
+        "teams":          teams,
+        "filled_total":   filled_total,
+        "capacity_total": capacity_total,
+        "fill_pct":       filled_total / capacity_total if capacity_total else 0,
+        "has_open_slot":  any(t["remaining"] > 0 for t in teams.values()),
+    }
+
+
 def validate_semester(tag: str) -> bool:
-    """Return True if tag matches expected format: YYYY-H or YYYY-A."""
-    import re
-    return bool(re.fullmatch(r"\d{4}-[HA]", tag.strip()))
+    """Return True if tag can be parsed as a valid semester. See semester.py."""
+    from src.semester import parse
+    return parse(tag) is not None

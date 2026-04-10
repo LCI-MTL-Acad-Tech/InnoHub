@@ -37,6 +37,56 @@ def _hours_committed(student_number: str, rows: list[dict]) -> int:
     )
 
 
+def _select_team(
+    project_id: str,
+    n_teams: int,
+    rows: list[dict],
+    console: Console,
+) -> str | None:
+    """
+    For a single-team project, return "".
+    For a multi-team project, show current team fill and ask which team.
+    Returns the chosen team label ("A", "B", …) or None to abort.
+    """
+    if n_teams <= 1:
+        return ""
+
+    letters = [chr(ord("A") + i) for i in range(n_teams)]
+
+    # Count assigned students per team
+    team_counts: dict[str, int] = {L: 0 for L in letters}
+    for r in rows:
+        if r["project_id"] == project_id and r["status"] in {"proposed", "confirmed"}:
+            t = r.get("team", "")
+            if t in team_counts:
+                team_counts[t] += 1
+
+    console.print(f"\n  [bold]{n_teams} competing teams[/bold]  — current members:")
+    for L in letters:
+        console.print(f"    {L}  {team_counts[L]} student(s)")
+
+    raw = input(
+        f"  Assign to which team? [{'/'.join(letters)}] "
+        f"(or 'new' to open a new team, blank to abort): "
+    ).strip().upper()
+
+    if not raw:
+        console.print("  Aborted.")
+        return None
+
+    if raw == "NEW":
+        # Open the next unused letter
+        next_letter = chr(ord("A") + n_teams)
+        console.print(f"  Opening team {next_letter}.")
+        return next_letter
+
+    if raw in letters:
+        return raw
+
+    console.print(f"  [red]'{raw}' is not a valid team label.[/red]")
+    return None
+
+
 def _print_email_draft(draft: dict, console: Console) -> None:
     lang = draft["language"].upper()
     console.print(f"\n  [dim]── Email draft ({lang}) ────────────────────────────────[/dim]")
@@ -124,20 +174,29 @@ def run_assign(args) -> None:
     hours_available = int(student_meta.get("hours_available", 0))
     hours_remaining = hours_available - hours_committed
 
-    # Check not already assigned to this project
+    # ── Team selection ────────────────────────────────────────────────────────
+    n_teams = int(project_meta.get("teams", 1))
+    team    = _select_team(project_id, n_teams, rows, console)
+    if team is None:
+        return
+
+    # Check not already assigned to this project+team
     already = [
         r for r in rows
         if r["student_number"] == student_number
         and r["project_id"] == project_id
+        and r.get("team", "") == team
         and r["status"] in {"proposed", "confirmed"}
     ]
     if already:
+        team_label = f" team {team}" if team else ""
         console.print(
             f"  [yellow]{student_meta['name']} is already assigned to "
-            f"'{project_meta['title']}' ({already[0]['status']}).[/yellow]"
+            f"'{project_meta['title']}'{team_label} ({already[0]['status']}).[/yellow]"
         )
         return
 
+    team_label = f"  [dim]Team {team}[/dim]" if team else ""
     console.print(
         f"\n  [bold]{student_meta['name']}[/bold]"
         f"  {student_meta['program']}  ·  {semester}"
@@ -145,14 +204,16 @@ def run_assign(args) -> None:
     )
     console.print(
         f"  → [bold]{project_meta['title']}[/bold]"
-        f"  ({company_meta['name']})\n"
+        f"  ({company_meta['name']}){team_label}\n"
     )
 
-    # ── Task fill state ───────────────────────────────────────────────────────
-    tasks = project_meta["capacity"]["tasks"]
+    # ── Task fill state (per team) ────────────────────────────────────────────
+    tasks  = project_meta["capacity"]["tasks"]
     filled: dict[str, int] = {}
     for r in rows:
-        if r["project_id"] == project_id and r["status"] in {"proposed", "confirmed"}:
+        if (r["project_id"] == project_id
+                and r.get("team", "") == team
+                and r["status"] in {"proposed", "confirmed"}):
             tid = r["task_id"]
             filled[tid] = filled.get(tid, 0) + int(r.get("hours_planned", 0))
 
@@ -237,22 +298,23 @@ def run_assign(args) -> None:
     new_rows = []
     for task, hours in task_assignments:
         new_rows.append({
-            "assignment_id":     assignment_id,
-            "student_number":    student_number,
-            "student_email":     student_meta.get("email", ""),
-            "student_program":   student_meta.get("program", ""),
-            "project_id":        project_id,
+            "assignment_id":      assignment_id,
+            "student_number":     student_number,
+            "student_email":      student_meta.get("email", ""),
+            "student_program":    student_meta.get("program", ""),
+            "project_id":         project_id,
             "project_lead_email": project_meta.get("lead_email", ""),
-            "semester":          semester,
-            "task_id":           task["task_id"],
-            "task_label":        task["label"],
-            "hours_planned":     hours,
-            "hours_committed":   hours,
-            "status":            "proposed",
-            "assigned_date":     TODAY,
-            "confirmed_date":    "",
-            "completed_date":    "",
-            "notes":             "",
+            "semester":           semester,
+            "team":               team,
+            "task_id":            task["task_id"],
+            "task_label":         task["label"],
+            "hours_planned":      hours,
+            "hours_committed":    hours,
+            "status":             "proposed",
+            "assigned_date":      TODAY,
+            "confirmed_date":     "",
+            "completed_date":     "",
+            "notes":              "",
         })
 
     append_assignment_rows(new_rows)

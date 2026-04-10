@@ -303,6 +303,20 @@ def _import_projects(
 
         console.print(f"  [dim]Row {i}[/dim]  [bold]{title}[/bold]")
 
+        # ── Competing teams ───────────────────────────────────────────────────
+        if dry_run:
+            n_teams = 1
+        else:
+            teams_raw = input(f"    Number of competing teams [1]: ").strip()
+            try:
+                n_teams = max(1, int(teams_raw)) if teams_raw else 1
+            except ValueError:
+                n_teams = 1
+            if n_teams > 1:
+                console.print(
+                    f"    [cyan]{n_teams} competing teams.[/cyan]"
+                )
+
         # ── Company resolution ────────────────────────────────────────────────
         company_id, company_name = _resolve_company(
             client_raw, lead_name, lead_email, dry_run, console
@@ -351,6 +365,7 @@ def _import_projects(
         if dry_run:
             console.print(
                 f"    [dim]company:[/dim]  {company_name}  [{company_id}]\n"
+                f"    [dim]teams:[/dim]    {n_teams}\n"
                 f"    [dim]tasks:[/dim]    {len(tasks)} task(s), {total_hours}h total\n"
                 f"    [dim]language:[/dim] {language}\n"
                 f"    [dim]extra docs:[/dim] {len(extra_files)}\n"
@@ -411,6 +426,7 @@ def _import_projects(
             "status":          "active",
             "semester":        semester,
             "language":        language,
+            "teams":           n_teams,
             "capacity": {
                 "total_hours": total_hours,
                 "tasks":       tasks,

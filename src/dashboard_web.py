@@ -162,7 +162,7 @@ def _build_companies(filters: dict) -> list[dict]:
 
 
 def _build_projects(filters: dict) -> list[dict]:
-    from src.store import list_ids, load_json, load_assignments
+    from src.store import list_ids, load_json, load_assignments, project_fill as _pf
     rows   = load_assignments()
     result = []
     for pid in list_ids("projects"):
@@ -188,11 +188,12 @@ def _build_projects(filters: dict) -> list[dict]:
             company = load_json("companies", meta["company_id"]).get("name", meta["company_id"])
         except Exception:
             company = meta.get("company_id", "")
-        active_rows  = [r for r in rows if r["project_id"] == pid and r["status"] in {"proposed","confirmed"}]
-        total_hours  = meta.get("capacity", {}).get("total_hours", 0)
-        filled_hours = sum(int(r.get("hours_planned", 0)) for r in active_rows)
-        if filters.get("unfilled") and filled_hours >= total_hours:
+
+        fill = _pf(meta, rows)
+
+        if filters.get("unfilled") and not fill["has_open_slot"]:
             continue
+
         coord_ids   = meta.get("coordinators", [])
         coord_names = []
         for cid in coord_ids:
@@ -200,6 +201,17 @@ def _build_projects(filters: dict) -> list[dict]:
                 coord_names.append(load_json("coordinators", cid).get("name", cid))
             except Exception:
                 pass
+
+        # Per-team summary for the web UI
+        teams_data = {
+            label: {
+                "filled":    td["filled"],
+                "remaining": td["remaining"],
+                "students":  td["students"],
+            }
+            for label, td in fill["teams"].items()
+        }
+
         result.append({
             "project_id":      pid,
             "title":           meta.get("title", ""),
@@ -208,9 +220,13 @@ def _build_projects(filters: dict) -> list[dict]:
             "semester":        meta.get("semester", ""),
             "status":          meta.get("status", ""),
             "language":        meta.get("language", ""),
-            "total_hours":     total_hours,
-            "filled_hours":    filled_hours,
-            "fill_pct":        round(filled_hours / total_hours, 3) if total_hours else 0,
+            "n_teams":         fill["n_teams"],
+            "total_hours":     fill["total_hours"],
+            "filled_hours":    fill["filled_total"],
+            "capacity_total":  fill["capacity_total"],
+            "fill_pct":        round(fill["fill_pct"], 3),
+            "has_open_slot":   fill["has_open_slot"],
+            "teams":           teams_data,
             "tasks":           meta.get("capacity", {}).get("tasks", []),
             "lead_name":       meta.get("lead_name", ""),
             "lead_email":      meta.get("lead_email", ""),
@@ -1107,9 +1123,13 @@ async function render(view) {
   else if (view === 'projects') {
     const data = await api('/api/projects');
     if (!data.length) { document.getElementById('projects-table').innerHTML = '<div class="empty">No projects yet.</div>'; return; }
-    document.getElementById('projects-table').innerHTML = '<table><tr><th>Title</th><th>Company</th><th>Semester</th><th>Fill</th><th>Coordinators</th><th>Lang</th><th>Status</th><th>Doc</th></tr>' +
-      data.map(p => '<tr><td>' + p.title + '<br><span style="font-size:11px;color:var(--muted)">' + p.lead_name + '</span></td><td>' + p.company + '</td><td class="mono">' + p.semester + '</td><td>' + fillBar(p.filled_hours, p.total_hours) + '<span style="font-size:11px;color:var(--muted)">' + p.filled_hours + '/' + p.total_hours + 'h</span></td><td style="font-size:12px;color:var(--muted)">' + (p.coordinators.join(', ') || '—') + '</td><td class="mono">' + (p.language || '') + '</td><td>' + badge(p.status) + '</td><td><a class="doc-link" href="/api/document/projects/' + p.project_id + '" target="_blank">view</a></td></tr>'
-      ).join('') + '</table>';
+    document.getElementById('projects-table').innerHTML = '<table><tr><th>Title</th><th>Company</th><th>Semester</th><th>Teams</th><th>Fill</th><th>Coordinators</th><th>Lang</th><th>Status</th><th>Doc</th></tr>' +
+      data.map(p => {
+        const teamsCell = p.n_teams > 1
+          ? Object.entries(p.teams).sort().map(([l,t]) => `<span title="Team ${l}">${l}:${t.filled}/${p.total_hours}h</span>`).join(' ')
+          : fillBar(p.filled_hours, p.total_hours) + '<span style="font-size:11px;color:var(--muted)">' + p.filled_hours + '/' + p.total_hours + 'h</span>';
+        return '<tr><td>' + p.title + '<br><span style="font-size:11px;color:var(--muted)">' + p.lead_name + '</span></td><td>' + p.company + '</td><td class="mono">' + p.semester + '</td><td class="mono" style="font-size:11px">' + (p.n_teams > 1 ? p.n_teams + ' teams' : '—') + '</td><td>' + teamsCell + '</td><td style="font-size:12px;color:var(--muted)">' + (p.coordinators.join(', ') || '—') + '</td><td class="mono">' + (p.language || '') + '</td><td>' + badge(p.status) + '</td><td><a class="doc-link" href="/api/document/projects/' + p.project_id + '" target="_blank">view</a></td></tr>';
+      }).join('') + '</table>';
   }
   else if (view === 'companies') {
     const data = await api('/api/companies');

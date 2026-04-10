@@ -32,7 +32,7 @@ def _match_student(student_number: str, args) -> None:
     from rich.console import Console
     from rich.table import Table
     from rich import box
-    from src.store import load_json, list_ids, load_assignments
+    from src.store import load_json, list_ids, load_assignments, project_fill
     from src.embed import load_embedding, cosine_similarity
     from src.semester import parse as parse_sem
 
@@ -121,17 +121,12 @@ def _match_student(student_number: str, args) -> None:
         except Exception:
             company_name = pmeta.get("company_id", "")
 
-        # Compute remaining hours on project
-        total_hours = pmeta.get("capacity", {}).get("total_hours", 0)
-        filled_hours = sum(
-            int(r.get("hours_planned", 0)) for r in rows
-            if r["project_id"] == pid
-            and r["status"] in {"proposed", "confirmed"}
-        )
-        hours_left = total_hours - filled_hours
+        fill = project_fill(pmeta, rows)
+        if not fill["has_open_slot"] and not getattr(args, "inactive", False):
+            continue   # all teams full — skip unless --inactive
 
         score = cosine_similarity(s_vec, load_embedding(p_emb))
-        results.append((score, pmeta, company_name, hours_left, total_hours))
+        results.append((score, pmeta, company_name, fill))
 
     results.sort(key=lambda x: x[0], reverse=True)
 
@@ -155,17 +150,28 @@ def _match_student(student_number: str, args) -> None:
     table.add_column("Score",    style="green", width=6,  justify="right")
     table.add_column("Project",  style="white", min_width=28)
     table.add_column("Company",  style="dim",   min_width=16)
-    table.add_column("Hours left", style="cyan", justify="right", width=10)
+    table.add_column("Fill",     style="cyan",  justify="right", width=14)
     table.add_column("Status",   style="yellow", width=10)
 
-    for i, (score, pmeta, company, hours_left, total) in enumerate(shown, 1):
+    for i, (score, pmeta, company, fill) in enumerate(shown, 1):
         status_colour = "green" if pmeta["status"] == "active" else "dim"
+        n_teams = fill["n_teams"]
+        if n_teams > 1:
+            # Show per-team summary: "A:20/80h B:0/80h"
+            team_parts = []
+            for label, td in sorted(fill["teams"].items()):
+                col = "green" if td["remaining"] > 0 else "dim"
+                team_parts.append(f"[{col}]{label}:{td['filled']}/{fill['total_hours']}h[/{col}]")
+            fill_str = " ".join(team_parts)
+        else:
+            td = next(iter(fill["teams"].values()))
+            fill_str = f"{td['filled']}/{fill['total_hours']}h"
         table.add_row(
             str(i),
             f"{score:.2f}",
             pmeta["title"],
             company,
-            f"{hours_left}/{total}h",
+            fill_str,
             f"[{status_colour}]{pmeta['status']}[/{status_colour}]",
         )
 
@@ -209,7 +215,7 @@ def _match_student(student_number: str, args) -> None:
         console.print("  Invalid selection.")
         return
 
-    _, pmeta, _, _, _ = shown[idx]
+    _, pmeta, _, _ = shown[idx]
 
     # Determine semester — prefer project semester
     import types
@@ -243,7 +249,7 @@ def _match_student(student_number: str, args) -> None:
         if raw2:
             try:
                 idx2 = int(raw2) - 1
-                _, pmeta2, _, _, _ = shown[idx2]
+                _, pmeta2, _, _ = shown[idx2]
                 assign_args2 = types.SimpleNamespace(
                     student_number = student_number,
                     project_id     = pmeta2["project_id"],
@@ -371,14 +377,9 @@ def _match_company(company_name: str, args) -> None:
 
     for pmeta in projects:
         p_vec = load_embedding(pmeta["embedding_file"])
-        total_hours  = pmeta.get("capacity", {}).get("total_hours", 0)
-        filled_hours = sum(
-            int(r.get("hours_planned", 0)) for r in rows
-            if r["project_id"] == pmeta["project_id"]
-            and r["status"] in {"proposed", "confirmed"}
-        )
+        fill  = project_fill(pmeta, rows)
 
-        # Students already assigned to this project
+        # Students assigned to any team of this project
         assigned_students = {
             r["student_number"] for r in rows
             if r["project_id"] == pmeta["project_id"]
@@ -387,8 +388,6 @@ def _match_company(company_name: str, args) -> None:
 
         results = []
         for sid in list_ids("students"):
-            if sid in assigned_students:
-                continue
             try:
                 smeta = load_json("students", sid)
             except Exception:
@@ -415,10 +414,22 @@ def _match_company(company_name: str, args) -> None:
         results.sort(key=lambda x: x[0], reverse=True)
         shown = results[:n] if n else results
 
+        # Fill summary line
+        n_teams = fill["n_teams"]
+        if n_teams > 1:
+            team_parts = [
+                f"{lbl}:{td['filled']}/{fill['total_hours']}h"
+                for lbl, td in sorted(fill["teams"].items())
+            ]
+            fill_str = "  ".join(team_parts)
+        else:
+            td = next(iter(fill["teams"].values()))
+            fill_str = f"{td['filled']}/{fill['total_hours']}h"
+
         console.print(
             f"\n  [bold]{pmeta['title']}[/bold]"
             f"  ·  {pmeta.get('semester', '')}"
-            f"  ·  {filled_hours}/{total_hours}h filled\n"
+            f"  ·  {fill_str} filled\n"
         )
 
         if not shown:
@@ -484,6 +495,8 @@ def run_list(args) -> None:
         table.add_column("Assigned", style="dim",       justify="right", width=8)
         table.add_column("Status",   style="yellow",    width=10)
 
+        pending_only = getattr(args, "pending_program", False)
+
         for sid in sorted(list_ids("students")):
             try:
                 m = load_json("students", sid)
@@ -493,35 +506,47 @@ def run_list(args) -> None:
                 continue
             if sem_filter_str and m.get("semester_start") != sem_filter_str:
                 continue
+            prog = m.get("program", "")
+            is_pending = prog in {"570.??"}  # only interior design DEC/AEC is truly pending
+            if pending_only and not is_pending:
+                continue
             committed = sum(
                 int(r.get("hours_planned", 0)) for r in rows
                 if r["student_number"] == sid
                 and r["status"] in {"proposed", "confirmed"}
             )
-            remaining = int(m.get("hours_available", 0)) - committed
+            remaining  = int(m.get("hours_available", 0)) - committed
             n_assigned = len({r["assignment_id"] for r in rows
                                if r["student_number"] == sid
                                and r["status"] in {"proposed", "confirmed"}})
             status_c = {"active": "green", "inactive": "yellow",
                         "completed": "dim"}.get(m.get("status", ""), "white")
+            prog_display = f"[bold yellow]{prog} ⚠[/bold yellow]" if is_pending else prog
             table.add_row(
                 sid,
                 m.get("name", ""),
-                m.get("program", ""),
+                prog_display,
                 m.get("semester_start", ""),
                 f"{remaining}h left",
                 str(n_assigned),
                 f"[{status_c}]{m.get('status','')}[/{status_c}]",
             )
         console.print(table)
+        if pending_only:
+            console.print(
+                "  [dim]Use [bold]innovhub ingest --type s --id <N>[/bold] "
+                "to re-ingest with a corrected program code.[/dim]\n"
+            )
 
     elif what == "projects":
+        from src.store import project_fill as _pf
         table = Table(box=box.SIMPLE_HEAD, show_header=True, header_style="bold",
                       title="Projects", title_style="bold", title_justify="left")
         table.add_column("ID",       style="dim mono",  min_width=24)
         table.add_column("Title",    style="white",     min_width=26)
         table.add_column("Company",  style="dim",       min_width=16)
         table.add_column("Semester", style="cyan",      width=10)
+        table.add_column("Teams",    style="dim",       width=6,  justify="right")
         table.add_column("Fill",     style="green",     justify="right", width=12)
         table.add_column("Status",   style="yellow",    width=10)
 
@@ -538,12 +563,10 @@ def run_list(args) -> None:
                 company = load_json("companies", m["company_id"]).get("name", m["company_id"])
             except Exception:
                 company = m.get("company_id", "")
-            total  = m.get("capacity", {}).get("total_hours", 0)
-            filled = sum(
-                int(r.get("hours_planned", 0)) for r in rows
-                if r["project_id"] == pid
-                and r["status"] in {"proposed", "confirmed"}
-            )
+            fill     = _pf(m, rows)
+            n_teams  = fill["n_teams"]
+            td       = next(iter(fill["teams"].values()))
+            fill_str = f"{fill['filled_total']}/{fill['capacity_total']}h"
             status_c = {"active": "green", "inactive": "yellow",
                         "closed": "red"}.get(m.get("status", ""), "white")
             table.add_row(
@@ -551,7 +574,8 @@ def run_list(args) -> None:
                 m.get("title", ""),
                 company,
                 m.get("semester", ""),
-                f"{filled}/{total}h",
+                str(n_teams),
+                fill_str,
                 f"[{status_c}]{m.get('status','')}[/{status_c}]",
             )
         console.print(table)
@@ -708,34 +732,23 @@ def _status_project(project_id: str) -> None:
     from rich.console import Console
     from rich.table import Table
     from rich import box
-    from src.store import load_json, load_assignments
+    from src.store import load_json, load_assignments, project_fill as _pf
 
     console = Console()
     meta    = load_json("projects", project_id)
     rows    = load_assignments()
-
-    active_rows = [
-        r for r in rows
-        if r["project_id"] == project_id
-        and r["status"] in {"proposed", "confirmed"}
-    ]
-
-    # Hours filled per task
-    filled: dict[str, int] = {}
-    students_on_task: dict[str, list[str]] = {}
-    for r in active_rows:
-        tid = r["task_id"]
-        filled[tid]             = filled.get(tid, 0) + int(r["hours_planned"])
-        students_on_task.setdefault(tid, []).append(r["student_number"])
+    fill    = _pf(meta, rows)
 
     status_colour = {
         "active": "green", "inactive": "yellow", "closed": "red"
     }.get(meta["status"], "white")
+    n_teams = fill["n_teams"]
 
     console.print(
         f"\n  [bold]{meta['title']}[/bold]"
         f"  ·  {meta['semester']}"
-        f"  ·  [{status_colour}]{meta['status']}[/{status_colour}]"
+        + (f"  ·  [cyan]{n_teams} teams[/cyan]" if n_teams > 1 else "")
+        + f"  ·  [{status_colour}]{meta['status']}[/{status_colour}]"
     )
     try:
         company = load_json("companies", meta["company_id"])
@@ -744,40 +757,91 @@ def _status_project(project_id: str) -> None:
         console.print(f"  Lead: {meta['lead_name']} <{meta['lead_email']}>\n")
 
     tasks = meta["capacity"]["tasks"]
-    total_hours   = sum(t["hours"] for t in tasks)
-    total_filled  = sum(filled.get(t["task_id"], 0) for t in tasks)
-    total_remain  = total_hours - total_filled
+    active_rows = [
+        r for r in rows
+        if r["project_id"] == project_id
+        and r["status"] in {"proposed", "confirmed"}
+    ]
 
-    table = Table(box=box.SIMPLE_HEAD, show_header=True, header_style="bold")
-    table.add_column("Task",      style="white",   min_width=28)
-    table.add_column("Total",     style="white",   justify="right")
-    table.add_column("Filled",    style="cyan",    justify="right")
-    table.add_column("Remaining", style="green",   justify="right")
-    table.add_column("Students",  style="dim",     min_width=16)
+    if n_teams <= 1:
+        # ── Single team — original task table ────────────────────────────────
+        filled: dict[str, int] = {}
+        students_on_task: dict[str, list[str]] = {}
+        for r in active_rows:
+            tid = r["task_id"]
+            filled[tid] = filled.get(tid, 0) + int(r["hours_planned"])
+            students_on_task.setdefault(tid, []).append(r["student_number"])
 
-    for t in tasks:
-        tid       = t["task_id"]
-        f         = filled.get(tid, 0)
-        remain    = t["hours"] - f
-        studs     = ", ".join(students_on_task.get(tid, [])) or "—"
-        remain_colour = "green" if remain > 0 else "dim"
+        total_hours  = fill["total_hours"]
+        total_filled = fill["filled_total"]
+        total_remain = total_hours - total_filled
+
+        table = Table(box=box.SIMPLE_HEAD, show_header=True, header_style="bold")
+        table.add_column("Task",      style="white", min_width=28)
+        table.add_column("Total",     style="white", justify="right")
+        table.add_column("Filled",    style="cyan",  justify="right")
+        table.add_column("Remaining", style="green", justify="right")
+        table.add_column("Students",  style="dim",   min_width=16)
+
+        for t in tasks:
+            tid   = t["task_id"]
+            f     = filled.get(tid, 0)
+            rem   = t["hours"] - f
+            studs = ", ".join(students_on_task.get(tid, [])) or "—"
+            table.add_row(
+                t["label"], f"{t['hours']}h", f"{f}h",
+                f"[{'green' if rem > 0 else 'dim'}]{rem}h[/{'green' if rem > 0 else 'dim'}]",
+                studs,
+            )
+        table.add_section()
         table.add_row(
-            t["label"],
-            f"{t['hours']}h",
-            f"{f}h",
-            f"[{remain_colour}]{remain}h[/{remain_colour}]",
-            studs,
+            "[bold]TOTAL[/bold]",
+            f"[bold]{total_hours}h[/bold]",
+            f"[bold]{total_filled}h[/bold]",
+            f"[bold]{total_remain}h[/bold]", "",
         )
+        console.print(table)
 
-    table.add_section()
-    table.add_row(
-        "[bold]TOTAL[/bold]",
-        f"[bold]{total_hours}h[/bold]",
-        f"[bold]{total_filled}h[/bold]",
-        f"[bold]{total_remain}h[/bold]",
-        "",
-    )
-    console.print(table)
+    else:
+        # ── Multi-team — one section per team ─────────────────────────────────
+        for team_label, td in sorted(fill["teams"].items()):
+            team_rows = [r for r in active_rows if r.get("team", "") == team_label]
+
+            filled_t: dict[str, int] = {}
+            students_t: dict[str, list[str]] = {}
+            for r in team_rows:
+                tid = r["task_id"]
+                filled_t[tid] = filled_t.get(tid, 0) + int(r["hours_planned"])
+                students_t.setdefault(tid, []).append(r["student_number"])
+
+            total_filled_t = td["filled"]
+            total_remain_t = td["remaining"]
+
+            console.print(
+                f"  [bold cyan]Team {team_label}[/bold cyan]"
+                f"  {total_filled_t}/{fill['total_hours']}h filled"
+                f"  ({len(td['students'])} student(s))"
+            )
+            table = Table(box=box.SIMPLE_HEAD, show_header=True,
+                          header_style="bold", show_footer=False)
+            table.add_column("Task",      style="white", min_width=28)
+            table.add_column("Total",     style="white", justify="right")
+            table.add_column("Filled",    style="cyan",  justify="right")
+            table.add_column("Remaining", style="green", justify="right")
+            table.add_column("Students",  style="dim",   min_width=16)
+
+            for t in tasks:
+                tid   = t["task_id"]
+                f     = filled_t.get(tid, 0)
+                rem   = t["hours"] - f
+                studs = ", ".join(students_t.get(tid, [])) or "—"
+                table.add_row(
+                    t["label"], f"{t['hours']}h", f"{f}h",
+                    f"[{'green' if rem > 0 else 'dim'}]{rem}h[/{'green' if rem > 0 else 'dim'}]",
+                    studs,
+                )
+            console.print(table)
+            console.print()
 
     confirmed = len({r["assignment_id"] for r in active_rows if r["status"] == "confirmed"})
     proposed  = len({r["assignment_id"] for r in active_rows if r["status"] == "proposed"})

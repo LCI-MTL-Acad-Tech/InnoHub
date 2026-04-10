@@ -145,3 +145,72 @@ def bootstrap(verbose: bool = False) -> None:
             log(f"created  {path_str}")
 
 
+
+def run_reset(args) -> None:
+    """
+    Reset data files so you can start a fresh import.
+
+    Without --hard:  clears JSON entities, assignments.csv, and audit.log.
+                     Documents and embeddings are preserved.
+    With --hard:     also deletes documents and embeddings.
+
+    Reminder of what to recreate:
+      innovhub import --dir raw/ --semester "Winter 2026"
+    """
+    import shutil
+    from rich.console import Console
+    console = Console()
+    hard = getattr(args, "hard", False)
+
+    console.print("\n  [bold red]◈ Innovation Hub — Reset[/bold red]\n")
+    if hard:
+        console.print("  This will delete ALL data including documents and embeddings.")
+    else:
+        console.print("  This will delete entity JSON files, assignments.csv, and audit.log.")
+        console.print("  Documents and embeddings will be preserved.")
+    console.print()
+
+    confirm = input("  Type YES to confirm: ").strip()
+    if confirm != "YES":
+        console.print("  Aborted.")
+        return
+
+    removed = 0
+
+    # JSON entities
+    for kind in ("students", "companies", "projects", "coordinators"):
+        folder = Path(f"data/{kind}")
+        for f in folder.glob("*.json"):
+            if f.stem == "SCHEMA":
+                continue
+            f.unlink()
+            removed += 1
+
+    # CSV and log
+    for fname in ("data/assignments.csv", "data/audit.log"):
+        p = Path(fname)
+        if p.exists():
+            p.unlink()
+            removed += 1
+
+    if hard:
+        # Documents
+        doc_root = Path("data/documents")
+        for f in doc_root.rglob("*"):
+            if f.is_file():
+                f.unlink()
+                removed += 1
+        # Embeddings
+        emb_root = Path("data/embeddings")
+        for f in emb_root.rglob("*.npy"):
+            f.unlink()
+            removed += 1
+
+    # Recreate empty CSV and log
+    Path("data/assignments.csv").touch()
+    Path("data/audit.log").touch()
+
+    console.print(f"\n  [green]✓[/green]  {removed} file(s) removed.")
+    console.print(
+        "  [dim]To reimport: [bold]innovhub import --dir raw/ --semester \"Winter 2026\"[/bold][/dim]\n"
+    )

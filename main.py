@@ -138,7 +138,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_explain.add_argument("--top-n",        metavar="N", type=int, default=10,
                            help="Number of shared terms to show. Default: 10.")
 
-    # ── dashboard ─────────────────────────────────────────────────────────────
+    # ── reset ─────────────────────────────────────────────────────────────────
+    p_reset = sub.add_parser("reset", help="Wipe data and start fresh (asks for confirmation).")
+    p_reset.add_argument("--hard", action="store_true",
+                         help="Also delete documents and embeddings (cannot be undone).")
     p_dash = sub.add_parser("dashboard", help="Show CLI dashboard.")
     # Filters
     p_dash.add_argument("--semester",    metavar="TAG",    action="append",
@@ -230,7 +233,8 @@ def main():
     elif cmd == "complete":          from src.lifecycle     import run_complete;  run_complete(args)
     elif cmd == "reassign":          from src.lifecycle     import run_reassign;  run_reassign(args)
     elif cmd == "explain":           from src.match         import run_explain;   run_explain(args)
-    elif cmd == "dashboard":         from src.dashboard_cli import run;           run(args)
+    elif cmd == "reset":             from src.bootstrap      import run_reset;     run_reset(args)
+    elif cmd == "dashboard":         from src.dashboard_cli  import run;           run(args)
     elif cmd == "web":               from src.dashboard_web import run;           run(args)
     else:
         parser.print_help()

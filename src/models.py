@@ -31,10 +31,12 @@ class Student:
     student_number: str
     name: str
     email: str
-    program: str
+    program: str           # code only, e.g. "420.BP"; "420.B0" = IT stream unknown; "570.??" = DEC/AEC pending
     semester_start: str
     hours_available: int
-    status: str        # active | inactive | completed
+    status: str            # active | inactive | completed
+    linkedin_url: str = ""
+    portfolio_urls: list[str] = field(default_factory=list)
     reassignment_history: list[dict] = field(default_factory=list)
     documents: list[Document] = field(default_factory=list)
     embedding_file: str = ""
@@ -78,9 +80,10 @@ class Project:
     capacity: Capacity
     lead_name: str
     lead_email: str
+    teams: int = 1     # number of competing independent teams (≥1)
     renewal_history: list[dict] = field(default_factory=list)
     documents: list[Document] = field(default_factory=list)
-    coordinators: list[str] = field(default_factory=list)  # coordinator_ids
+    coordinators: list[str] = field(default_factory=list)
     embedding_file: str = ""
     notes: str = ""
 
@@ -95,6 +98,7 @@ class AssignmentRow:
     project_id: str
     project_lead_email: str
     semester: str
+    team: str          # team label: "A", "B", "C", … or "" for single-team projects
     task_id: str
     task_label: str
     hours_planned: int
@@ -130,3 +134,8 @@ COMPANY_STATUSES     = {"active", "inactive"}
 PROJECT_STATUSES     = {"active", "inactive", "closed"}
 COORDINATOR_STATUSES = {"active", "inactive"}
 ASSIGNMENT_STATUSES  = {"proposed", "confirmed", "completed", "cancelled"}
+
+# Pending program codes — set when field is ambiguous and needs confirmation
+# 420.B0 is a valid stored code (IT, stream unknown — not pending)
+# 570.?? is the only truly pending code (DEC vs AEC unclear)
+PENDING_PROGRAMS = {"570.??"}   # Interior design DEC/AEC unclear

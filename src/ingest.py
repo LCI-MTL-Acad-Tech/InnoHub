@@ -422,6 +422,17 @@ def _ingest_project(files: list[Path], args) -> None:
 
     semester = _prompt_semester(args)
 
+    # ── Competing teams ───────────────────────────────────────────────────────
+    teams_raw = input("  Number of competing teams [1]: ").strip()
+    try:
+        n_teams = max(1, int(teams_raw)) if teams_raw else 1
+    except ValueError:
+        n_teams = 1
+    if n_teams > 1:
+        console.print(
+            f"  [cyan]{n_teams} independent teams will compete on this project.[/cyan]"
+        )
+
     # ── Task definition ───────────────────────────────────────────────────────
     tasks = _define_tasks(args, console)
     if tasks is None:
@@ -439,7 +450,7 @@ def _ingest_project(files: list[Path], args) -> None:
     _temp_meta = {
         "project_id": project_id, "company_id": company_id,
         "title": title, "status": "active", "semester": semester,
-        "language": language,
+        "language": language, "teams": n_teams,
         "capacity": {"total_hours": total_hours, "tasks": tasks},
         "lead_name": lead_name, "lead_email": lead_email,
         "renewal_history": [], "documents": doc_records,
@@ -714,6 +725,9 @@ def _prompt_semester(args) -> str:
     return prompt(args).to_storage()
 
 def _slugify(text: str) -> str:
+    import unicodedata
+    text = unicodedata.normalize("NFD", text)
+    text = "".join(c for c in text if unicodedata.category(c) != "Mn")
     text = text.lower().strip()
     text = re.sub(r"[^\w\s-]", "", text)
     text = re.sub(r"[\s-]+", "_", text)

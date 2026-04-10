@@ -372,13 +372,10 @@ def _year_of(sem_str: str) -> int | None:
 
 
 def _hours_remaining(project: dict, rows: list[dict]) -> int:
-    total  = project.get("capacity", {}).get("total_hours", 0)
-    filled = sum(
-        int(r.get("hours_planned", 0)) for r in rows
-        if r["project_id"] == project["project_id"]
-        and r["status"] in {"proposed", "confirmed"}
-    )
-    return total - filled
+    from src.store import project_fill
+    fill = project_fill(project, rows)
+    # A slot is open if any team still has capacity
+    return fill["capacity_total"] - fill["filled_total"]
 
 
 # ── Project table renderer ────────────────────────────────────────────────────
@@ -396,11 +393,10 @@ def _render_project_table(
 
     # Sort
     if sort_by == "fill-rate":
-        projects = sorted(projects, key=lambda p: (
-            sum(int(r.get("hours_planned",0)) for r in rows
-                if r["project_id"]==p["project_id"] and r["status"] in {"proposed","confirmed"})
-            / max(p.get("capacity",{}).get("total_hours",1), 1)
-        ), reverse=True)
+        from src.store import project_fill as _pf
+        projects = sorted(projects,
+                          key=lambda p: _pf(p, rows)["fill_pct"],
+                          reverse=True)
     elif sort_by == "semester":
         projects = sorted(projects, key=lambda p: p.get("semester",""))
     elif sort_by == "company":
@@ -453,20 +449,16 @@ def _render_project_table(
     table.add_column("Group",    style="dim",   min_width=18)
     table.add_column("Project",  style="white", min_width=28)
     table.add_column("Sem",      style="cyan",  width=12)
-    table.add_column("Filled",   justify="right", style="green")
-    table.add_column("Total",    justify="right", style="dim")
+    table.add_column("Teams",    style="dim",   width=6,  justify="right")
     table.add_column("Fill",     min_width=22)
     table.add_column("Coords",   style="dim",   min_width=14)
 
     for group_name, group_projects in grouped.items():
         for i, p in enumerate(group_projects):
-            pid         = p["project_id"]
-            total_hours = p.get("capacity", {}).get("total_hours", 0)
-            filled      = sum(
-                int(r.get("hours_planned", 0)) for r in rows
-                if r["project_id"] == pid and r["status"] in {"proposed","confirmed"}
-            )
-            bar = _rate_bar(filled / total_hours if total_hours else 0, width=14)
+            from src.store import project_fill as _pf
+            fill     = _pf(p, rows)
+            n_teams  = fill["n_teams"]
+            fill_bar_str = _rate_bar(fill["fill_pct"], width=14)
 
             coord_ids   = p.get("coordinators", [])
             coord_names = []
@@ -481,11 +473,10 @@ def _render_project_table(
 
             table.add_row(
                 group_name if i == 0 else "",
-                p.get("title", pid),
+                p.get("title", p["project_id"]),
                 p.get("semester", ""),
-                f"{filled}h",
-                f"{total_hours}h",
-                bar,
+                str(n_teams) if n_teams > 1 else "",
+                fill_bar_str,
                 coords_str,
             )
 
