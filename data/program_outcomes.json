@@ -1,0 +1,2944 @@
+{
+  "_comment": "Program learning outcomes from the LCI Education website. Combined with ministry competencies when available. Source: collegelasalle.lcieducation.com. Update when program content changes.",
+  "_source": "LCI Education website — learningOutcomes + about fields, fetched April 2026",
+  "420.BP": {
+    "label_fr": "Techniques de l'informatique – Programmation",
+    "outcomes": [
+      "Maîtrise des langages de programmation pour des solutions logicielles évolutives",
+      "Résolution de problèmes complexes et conception de solutions algorithmiques",
+      "Application de méthodologies rigoureuses pour le développement de logiciels fiables",
+      "Tests, débogage et assurance de la performance des systèmes",
+      "Gestion de projets informatiques",
+      "Analyse orientée objet pour la conception et l'intégration d'applications industrielles"
+    ],
+    "competencies": [
+      {
+        "code": "00SE",
+        "title_fr": "Interagir dans un contexte professionnel",
+        "title_en": "Interact in a professional setting",
+        "elements": [
+          {
+            "id": "00SE-1",
+            "title_fr": "Établir des relations professionnelles avec les utilisateurs et les clients",
+            "title_en": "Establish professional relationships with users and clients",
+            "criteria": [
+              {
+                "id": "00SE-1.1",
+                "fr": "Attitudes et comportements démontrant la capacité d'écoute",
+                "en": "Attitudes and behaviors that demonstrate the ability to listen"
+              },
+              {
+                "id": "00SE-1.2",
+                "fr": "Adaptation du niveau de langage à la situation",
+                "en": "Adaptation of the level of language to the situation"
+              },
+              {
+                "id": "00SE-1.3",
+                "fr": "Respect des règles de politesse et de courtoisie",
+                "en": "Observance of rules of politeness and common courtesy"
+              },
+              {
+                "id": "00SE-1.4",
+                "fr": "Respect de l'approche client",
+                "en": "Observance of the client-based approach"
+              }
+            ]
+          },
+          {
+            "id": "00SE-2",
+            "title_fr": "Travailler au sein d'une équipe multidisciplinaire",
+            "title_en": "Work within a multidisciplinary team",
+            "criteria": [
+              {
+                "id": "00SE-2.1",
+                "fr": "Attitudes et comportements démontrant le respect, l'ouverture d'esprit et un esprit de collaboration",
+                "en": "Attitudes and behaviors that demonstrate respect, openness and a collaborative spirit"
+              },
+              {
+                "id": "00SE-2.2",
+                "fr": "Communication efficace avec tous les membres de l'équipe",
+                "en": "Effective communication with all team members"
+              },
+              {
+                "id": "00SE-2.3",
+                "fr": "Bonne exécution des tâches assignées",
+                "en": "Proper performance of assigned tasks"
+              },
+              {
+                "id": "00SE-2.4",
+                "fr": "Respect des règles pour un fonctionnement optimal de l'équipe",
+                "en": "Compliance with rules for optimal team function"
+              },
+              {
+                "id": "00SE-2.5",
+                "fr": "Respect de la culture d'entreprise",
+                "en": "Respect for the corporate culture"
+              },
+              {
+                "id": "00SE-2.6",
+                "fr": "Respect des normes, méthodes et meilleures pratiques en programmation applicative et en gestion de réseaux",
+                "en": "Compliance with application programming and network management standards, methods and best practices"
+              },
+              {
+                "id": "00SE-2.7",
+                "fr": "Respect des limites du champ d'intervention professionnelle et de l'expertise des membres de l'équipe dans d'autres métiers",
+                "en": "Observance of the limits of the scope of professional intervention and respect for the expertise of team members in other occupations"
+              },
+              {
+                "id": "00SE-2.8",
+                "fr": "Respect des délais",
+                "en": "Adherence to deadlines"
+              }
+            ]
+          },
+          {
+            "id": "00SE-3",
+            "title_fr": "Se familiariser avec les obligations légales et les règles d'éthique professionnelle",
+            "title_en": "Become familiar with the legal obligations and rules of professional ethics",
+            "criteria": [
+              {
+                "id": "00SE-3.1",
+                "fr": "Inventaire précis des principales infractions et actes criminels en technologies de l'information",
+                "en": "Accurate listing of the main offences and criminal acts in information technology"
+              },
+              {
+                "id": "00SE-3.2",
+                "fr": "Inventaire précis des principales violations des droits de propriété intellectuelle en technologies de l'information",
+                "en": "Accurate listing of the main breaches of intellectual property rights in information technology"
+              },
+              {
+                "id": "00SE-3.3",
+                "fr": "Évaluation juste des conséquences des infractions, actes criminels et violations de la propriété intellectuelle",
+                "en": "Accurate assessment of the consequences of offences, criminal acts and breaches of intellectual property"
+              },
+              {
+                "id": "00SE-3.4",
+                "fr": "Détermination des mesures appropriées à la situation",
+                "en": "Determination of the measures appropriate to the situation"
+              },
+              {
+                "id": "00SE-3.5",
+                "fr": "Respect des lois, des codes d'éthique et des politiques d'entreprise",
+                "en": "Compliance with laws, codes of ethics and corporate policies"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "00SH",
+        "title_fr": "S'adapter à des technologies informatiques",
+        "title_en": "Adapt to information technologies",
+        "elements": [
+          {
+            "id": "00SH-1",
+            "title_fr": "Assurer une veille technologique",
+            "title_en": "Monitor technological developments",
+            "criteria": [
+              {
+                "id": "00SH-1.1",
+                "fr": "Recherche efficace de sources d'information",
+                "en": "Effective search for information sources"
+              },
+              {
+                "id": "00SH-1.2",
+                "fr": "Utilisation appropriée des outils de veille",
+                "en": "Appropriate use of monitoring tools"
+              },
+              {
+                "id": "00SH-1.3",
+                "fr": "Analyse juste des informations recueillies",
+                "en": "Accurate analysis of the information collected"
+              },
+              {
+                "id": "00SH-1.4",
+                "fr": "Identification précise des technologies à tester",
+                "en": "Accurate identification of the technologies to test"
+              }
+            ]
+          },
+          {
+            "id": "00SH-2",
+            "title_fr": "Tester des technologies logicielles et matérielles",
+            "title_en": "Test software and hardware technology",
+            "criteria": [
+              {
+                "id": "00SH-2.1",
+                "fr": "Branchement approprié du matériel informatique et des périphériques nécessaires",
+                "en": "Proper connection of computer equipment and the necessary peripheral devices"
+              },
+              {
+                "id": "00SH-2.2",
+                "fr": "Installation correcte des applications ou outils de programmation nécessaires",
+                "en": "Proper installation of the necessary programming applications or tools"
+              },
+              {
+                "id": "00SH-2.3",
+                "fr": "Test adéquat de la technologie",
+                "en": "Adequate testing of the technology"
+              },
+              {
+                "id": "00SH-2.4",
+                "fr": "Attitudes et comportements démontrant l'autonomie et l'ouverture d'esprit",
+                "en": "Attitudes and behaviours that demonstrate self-reliance and open-mindedness"
+              }
+            ]
+          },
+          {
+            "id": "00SH-3",
+            "title_fr": "Rédiger des avis technologiques",
+            "title_en": "Draw up technological opinions",
+            "criteria": [
+              {
+                "id": "00SH-3.1",
+                "fr": "Participation active aux discussions",
+                "en": "Active participation in discussions"
+              },
+              {
+                "id": "00SH-3.2",
+                "fr": "Justification satisfaisante du potentiel de la technologie",
+                "en": "Satisfactory justification of the technology's potential"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "420-EP6-AS"
+  },
+  "420.BR": {
+    "label_fr": "Techniques de l'informatique – Gestion de réseaux et sécurité",
+    "outcomes": [
+      "Conception, mise en œuvre et dépannage d'infrastructures réseau physiques et infonuagiques",
+      "Cybersécurité : protection des systèmes réseau contre les menaces",
+      "Surveillance réseau, optimisation des performances et planification de capacité",
+      "Évaluation des risques, planification de reprise après sinistre et réponse aux incidents",
+      "Certifications CISCO et LPIC",
+      "Administration de systèmes Linux et gestion d'applications réseau"
+    ],
+    "competencies": [
+      {
+        "code": "00SE",
+        "title_fr": "Interagir dans un contexte professionnel",
+        "title_en": "Interact in a professional setting",
+        "elements": [
+          {
+            "id": "00SE-1",
+            "title_fr": "Établir des relations professionnelles avec les utilisateurs et les clients",
+            "title_en": "Establish professional relationships with users and clients",
+            "criteria": [
+              {
+                "id": "00SE-1.1",
+                "fr": "Attitudes et comportements démontrant la capacité d'écoute",
+                "en": "Attitudes and behaviors that demonstrate the ability to listen"
+              },
+              {
+                "id": "00SE-1.2",
+                "fr": "Adaptation du niveau de langage à la situation",
+                "en": "Adaptation of the level of language to the situation"
+              },
+              {
+                "id": "00SE-1.3",
+                "fr": "Respect des règles de politesse et de courtoisie",
+                "en": "Observance of rules of politeness and common courtesy"
+              },
+              {
+                "id": "00SE-1.4",
+                "fr": "Respect de l'approche client",
+                "en": "Observance of the client-based approach"
+              }
+            ]
+          },
+          {
+            "id": "00SE-2",
+            "title_fr": "Travailler au sein d'une équipe multidisciplinaire",
+            "title_en": "Work within a multidisciplinary team",
+            "criteria": [
+              {
+                "id": "00SE-2.1",
+                "fr": "Attitudes et comportements démontrant le respect, l'ouverture d'esprit et un esprit de collaboration",
+                "en": "Attitudes and behaviors that demonstrate respect, openness and a collaborative spirit"
+              },
+              {
+                "id": "00SE-2.2",
+                "fr": "Communication efficace avec tous les membres de l'équipe",
+                "en": "Effective communication with all team members"
+              },
+              {
+                "id": "00SE-2.3",
+                "fr": "Bonne exécution des tâches assignées",
+                "en": "Proper performance of assigned tasks"
+              },
+              {
+                "id": "00SE-2.4",
+                "fr": "Respect des règles pour un fonctionnement optimal de l'équipe",
+                "en": "Compliance with rules for optimal team function"
+              },
+              {
+                "id": "00SE-2.5",
+                "fr": "Respect de la culture d'entreprise",
+                "en": "Respect for the corporate culture"
+              },
+              {
+                "id": "00SE-2.6",
+                "fr": "Respect des normes, méthodes et meilleures pratiques en programmation applicative et en gestion de réseaux",
+                "en": "Compliance with application programming and network management standards, methods and best practices"
+              },
+              {
+                "id": "00SE-2.7",
+                "fr": "Respect des limites du champ d'intervention professionnelle et de l'expertise des membres de l'équipe dans d'autres métiers",
+                "en": "Observance of the limits of the scope of professional intervention and respect for the expertise of team members in other occupations"
+              },
+              {
+                "id": "00SE-2.8",
+                "fr": "Respect des délais",
+                "en": "Adherence to deadlines"
+              }
+            ]
+          },
+          {
+            "id": "00SE-3",
+            "title_fr": "Se familiariser avec les obligations légales et les règles d'éthique professionnelle",
+            "title_en": "Become familiar with the legal obligations and rules of professional ethics",
+            "criteria": [
+              {
+                "id": "00SE-3.1",
+                "fr": "Inventaire précis des principales infractions et actes criminels en technologies de l'information",
+                "en": "Accurate listing of the main offences and criminal acts in information technology"
+              },
+              {
+                "id": "00SE-3.2",
+                "fr": "Inventaire précis des principales violations des droits de propriété intellectuelle en technologies de l'information",
+                "en": "Accurate listing of the main breaches of intellectual property rights in information technology"
+              },
+              {
+                "id": "00SE-3.3",
+                "fr": "Évaluation juste des conséquences des infractions, actes criminels et violations de la propriété intellectuelle",
+                "en": "Accurate assessment of the consequences of offences, criminal acts and breaches of intellectual property"
+              },
+              {
+                "id": "00SE-3.4",
+                "fr": "Détermination des mesures appropriées à la situation",
+                "en": "Determination of the measures appropriate to the situation"
+              },
+              {
+                "id": "00SE-3.5",
+                "fr": "Respect des lois, des codes d'éthique et des politiques d'entreprise",
+                "en": "Compliance with laws, codes of ethics and corporate policies"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "00SH",
+        "title_fr": "S'adapter à des technologies informatiques",
+        "title_en": "Adapt to information technologies",
+        "elements": [
+          {
+            "id": "00SH-1",
+            "title_fr": "Assurer une veille technologique",
+            "title_en": "Monitor technological developments",
+            "criteria": [
+              {
+                "id": "00SH-1.1",
+                "fr": "Recherche efficace de sources d'information",
+                "en": "Effective search for information sources"
+              },
+              {
+                "id": "00SH-1.2",
+                "fr": "Utilisation appropriée des outils de veille",
+                "en": "Appropriate use of monitoring tools"
+              },
+              {
+                "id": "00SH-1.3",
+                "fr": "Analyse juste des informations recueillies",
+                "en": "Accurate analysis of the information collected"
+              },
+              {
+                "id": "00SH-1.4",
+                "fr": "Identification précise des technologies à tester",
+                "en": "Accurate identification of the technologies to test"
+              }
+            ]
+          },
+          {
+            "id": "00SH-2",
+            "title_fr": "Tester des technologies logicielles et matérielles",
+            "title_en": "Test software and hardware technology",
+            "criteria": [
+              {
+                "id": "00SH-2.1",
+                "fr": "Branchement approprié du matériel informatique et des périphériques nécessaires",
+                "en": "Proper connection of computer equipment and the necessary peripheral devices"
+              },
+              {
+                "id": "00SH-2.2",
+                "fr": "Installation correcte des applications ou outils de programmation nécessaires",
+                "en": "Proper installation of the necessary programming applications or tools"
+              },
+              {
+                "id": "00SH-2.3",
+                "fr": "Test adéquat de la technologie",
+                "en": "Adequate testing of the technology"
+              },
+              {
+                "id": "00SH-2.4",
+                "fr": "Attitudes et comportements démontrant l'autonomie et l'ouverture d'esprit",
+                "en": "Attitudes and behaviours that demonstrate self-reliance and open-mindedness"
+              }
+            ]
+          },
+          {
+            "id": "00SH-3",
+            "title_fr": "Rédiger des avis technologiques",
+            "title_en": "Draw up technological opinions",
+            "criteria": [
+              {
+                "id": "00SH-3.1",
+                "fr": "Participation active aux discussions",
+                "en": "Active participation in discussions"
+              },
+              {
+                "id": "00SH-3.2",
+                "fr": "Justification satisfaisante du potentiel de la technologie",
+                "en": "Satisfactory justification of the technology's potential"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "420-SG6-AS"
+  },
+  "420.BX": {
+    "label_fr": "Techniques de l'informatique – Programmation en jeux vidéo",
+    "outcomes": [
+      "Programmation de moteurs de jeux en Java, C++ et autres langages",
+      "Conception et implémentation de mécaniques et de mondes de jeux vidéo",
+      "Résolution de problèmes techniques pour assurer la fluidité du gameplay",
+      "Tests de jeux et assurance qualité : identification et correction d'erreurs",
+      "Développement pour jeux AAA, équipes indépendantes et applications",
+      "Collaboration avec des studios de jeux de premier plan"
+    ],
+    "competencies": [
+      {
+        "code": "00SE",
+        "title_fr": "Interagir dans un contexte professionnel",
+        "title_en": "Interact in a professional setting",
+        "elements": [
+          {
+            "id": "00SE-1",
+            "title_fr": "Établir des relations professionnelles avec les utilisateurs et les clients",
+            "title_en": "Establish professional relationships with users and clients",
+            "criteria": [
+              {
+                "id": "00SE-1.1",
+                "fr": "Attitudes et comportements démontrant la capacité d'écoute",
+                "en": "Attitudes and behaviors that demonstrate the ability to listen"
+              },
+              {
+                "id": "00SE-1.2",
+                "fr": "Adaptation du niveau de langage à la situation",
+                "en": "Adaptation of the level of language to the situation"
+              },
+              {
+                "id": "00SE-1.3",
+                "fr": "Respect des règles de politesse et de courtoisie",
+                "en": "Observance of rules of politeness and common courtesy"
+              },
+              {
+                "id": "00SE-1.4",
+                "fr": "Respect de l'approche client",
+                "en": "Observance of the client-based approach"
+              }
+            ]
+          },
+          {
+            "id": "00SE-2",
+            "title_fr": "Travailler au sein d'une équipe multidisciplinaire",
+            "title_en": "Work within a multidisciplinary team",
+            "criteria": [
+              {
+                "id": "00SE-2.1",
+                "fr": "Attitudes et comportements démontrant le respect, l'ouverture d'esprit et un esprit de collaboration",
+                "en": "Attitudes and behaviors that demonstrate respect, openness and a collaborative spirit"
+              },
+              {
+                "id": "00SE-2.2",
+                "fr": "Communication efficace avec tous les membres de l'équipe",
+                "en": "Effective communication with all team members"
+              },
+              {
+                "id": "00SE-2.3",
+                "fr": "Bonne exécution des tâches assignées",
+                "en": "Proper performance of assigned tasks"
+              },
+              {
+                "id": "00SE-2.4",
+                "fr": "Respect des règles pour un fonctionnement optimal de l'équipe",
+                "en": "Compliance with rules for optimal team function"
+              },
+              {
+                "id": "00SE-2.5",
+                "fr": "Respect de la culture d'entreprise",
+                "en": "Respect for the corporate culture"
+              },
+              {
+                "id": "00SE-2.6",
+                "fr": "Respect des normes, méthodes et meilleures pratiques en programmation applicative et en gestion de réseaux",
+                "en": "Compliance with application programming and network management standards, methods and best practices"
+              },
+              {
+                "id": "00SE-2.7",
+                "fr": "Respect des limites du champ d'intervention professionnelle et de l'expertise des membres de l'équipe dans d'autres métiers",
+                "en": "Observance of the limits of the scope of professional intervention and respect for the expertise of team members in other occupations"
+              },
+              {
+                "id": "00SE-2.8",
+                "fr": "Respect des délais",
+                "en": "Adherence to deadlines"
+              }
+            ]
+          },
+          {
+            "id": "00SE-3",
+            "title_fr": "Se familiariser avec les obligations légales et les règles d'éthique professionnelle",
+            "title_en": "Become familiar with the legal obligations and rules of professional ethics",
+            "criteria": [
+              {
+                "id": "00SE-3.1",
+                "fr": "Inventaire précis des principales infractions et actes criminels en technologies de l'information",
+                "en": "Accurate listing of the main offences and criminal acts in information technology"
+              },
+              {
+                "id": "00SE-3.2",
+                "fr": "Inventaire précis des principales violations des droits de propriété intellectuelle en technologies de l'information",
+                "en": "Accurate listing of the main breaches of intellectual property rights in information technology"
+              },
+              {
+                "id": "00SE-3.3",
+                "fr": "Évaluation juste des conséquences des infractions, actes criminels et violations de la propriété intellectuelle",
+                "en": "Accurate assessment of the consequences of offences, criminal acts and breaches of intellectual property"
+              },
+              {
+                "id": "00SE-3.4",
+                "fr": "Détermination des mesures appropriées à la situation",
+                "en": "Determination of the measures appropriate to the situation"
+              },
+              {
+                "id": "00SE-3.5",
+                "fr": "Respect des lois, des codes d'éthique et des politiques d'entreprise",
+                "en": "Compliance with laws, codes of ethics and corporate policies"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "00SH",
+        "title_fr": "S'adapter à des technologies informatiques",
+        "title_en": "Adapt to information technologies",
+        "elements": [
+          {
+            "id": "00SH-1",
+            "title_fr": "Assurer une veille technologique",
+            "title_en": "Monitor technological developments",
+            "criteria": [
+              {
+                "id": "00SH-1.1",
+                "fr": "Recherche efficace de sources d'information",
+                "en": "Effective search for information sources"
+              },
+              {
+                "id": "00SH-1.2",
+                "fr": "Utilisation appropriée des outils de veille",
+                "en": "Appropriate use of monitoring tools"
+              },
+              {
+                "id": "00SH-1.3",
+                "fr": "Analyse juste des informations recueillies",
+                "en": "Accurate analysis of the information collected"
+              },
+              {
+                "id": "00SH-1.4",
+                "fr": "Identification précise des technologies à tester",
+                "en": "Accurate identification of the technologies to test"
+              }
+            ]
+          },
+          {
+            "id": "00SH-2",
+            "title_fr": "Tester des technologies logicielles et matérielles",
+            "title_en": "Test software and hardware technology",
+            "criteria": [
+              {
+                "id": "00SH-2.1",
+                "fr": "Branchement approprié du matériel informatique et des périphériques nécessaires",
+                "en": "Proper connection of computer equipment and the necessary peripheral devices"
+              },
+              {
+                "id": "00SH-2.2",
+                "fr": "Installation correcte des applications ou outils de programmation nécessaires",
+                "en": "Proper installation of the necessary programming applications or tools"
+              },
+              {
+                "id": "00SH-2.3",
+                "fr": "Test adéquat de la technologie",
+                "en": "Adequate testing of the technology"
+              },
+              {
+                "id": "00SH-2.4",
+                "fr": "Attitudes et comportements démontrant l'autonomie et l'ouverture d'esprit",
+                "en": "Attitudes and behaviours that demonstrate self-reliance and open-mindedness"
+              }
+            ]
+          },
+          {
+            "id": "00SH-3",
+            "title_fr": "Rédiger des avis technologiques",
+            "title_en": "Draw up technological opinions",
+            "criteria": [
+              {
+                "id": "00SH-3.1",
+                "fr": "Participation active aux discussions",
+                "en": "Active participation in discussions"
+              },
+              {
+                "id": "00SH-3.2",
+                "fr": "Justification satisfaisante du potentiel de la technologie",
+                "en": "Satisfactory justification of the technology's potential"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "420-JST-AS"
+  },
+  "420.B0": {
+    "label_fr": "Techniques de l'informatique (profil inconnu)",
+    "outcomes": [
+      "Programmation et développement logiciel",
+      "Résolution de problèmes algorithmiques",
+      "Gestion de systèmes informatiques",
+      "Tests et assurance qualité"
+    ],
+    "_note": "Stream unknown — use 420.BP outcomes as default for matching"
+  },
+  "LEA.3Q": {
+    "label_fr": "Programmeur-analyste en technologies de l'information (AEC)",
+    "outcomes": [
+      "Identification, collecte et analyse des besoins de traitement de l'information",
+      "Modélisation des données et des processus avec logiciels de quatrième génération",
+      "Gestion et configuration d'applications réseau",
+      "Maîtrise linguistique pour solutions logicielles évolutives",
+      "Résolution de problèmes complexes et solutions algorithmiques",
+      "Tests, débogage et assurance de la performance du système"
+    ],
+    "competencies": [
+      {
+        "code": "00Q1",
+        "title_fr": "Effectuer l'installation et la gestion d'ordinateurs",
+        "title_en": "Install and manage computers",
+        "elements": [
+          {
+            "id": "00Q1-1",
+            "title_fr": "Installer et configurer des postes de travail",
+            "title_en": "Install and configure workstations",
+            "criteria": [
+              {
+                "id": "00Q1-1.1",
+                "fr": "Installation correcte des composants matériels et logiciels",
+                "en": "Correct installation of hardware and software components"
+              },
+              {
+                "id": "00Q1-1.2",
+                "fr": "Configuration adéquate des paramètres système",
+                "en": "Adequate configuration of system parameters"
+              },
+              {
+                "id": "00Q1-1.3",
+                "fr": "Vérification du bon fonctionnement des systèmes installés",
+                "en": "Verification of proper operation of installed systems"
+              }
+            ]
+          },
+          {
+            "id": "00Q1-2",
+            "title_fr": "Assurer la gestion et la maintenance des ordinateurs",
+            "title_en": "Ensure computer management and maintenance",
+            "criteria": [
+              {
+                "id": "00Q1-2.1",
+                "fr": "Application rigoureuse des procédures de maintenance préventive",
+                "en": "Rigorous application of preventive maintenance procedures"
+              },
+              {
+                "id": "00Q1-2.2",
+                "fr": "Mise à jour régulière des systèmes d'exploitation et des logiciels",
+                "en": "Regular updating of operating systems and software"
+              },
+              {
+                "id": "00Q1-2.3",
+                "fr": "Documentation précise des interventions effectuées",
+                "en": "Accurate documentation of work performed"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "00Q2",
+        "title_fr": "Utiliser des langages de programmation",
+        "title_en": "Use programming languages",
+        "elements": [
+          {
+            "id": "00Q2-1",
+            "title_fr": "Analyser les besoins et concevoir des solutions",
+            "title_en": "Analyze requirements and design solutions",
+            "criteria": [
+              {
+                "id": "00Q2-1.1",
+                "fr": "Analyse rigoureuse des besoins fonctionnels",
+                "en": "Rigorous analysis of functional requirements"
+              },
+              {
+                "id": "00Q2-1.2",
+                "fr": "Conception adéquate de l'algorithme ou de la solution",
+                "en": "Adequate design of the algorithm or solution"
+              }
+            ]
+          },
+          {
+            "id": "00Q2-2",
+            "title_fr": "Coder et tester des programmes",
+            "title_en": "Code and test programs",
+            "criteria": [
+              {
+                "id": "00Q2-2.1",
+                "fr": "Application correcte des règles de codage et des bonnes pratiques",
+                "en": "Correct application of coding rules and best practices"
+              },
+              {
+                "id": "00Q2-2.2",
+                "fr": "Tests appropriés assurant la qualité du code produit",
+                "en": "Appropriate testing ensuring the quality of the produced code"
+              },
+              {
+                "id": "00Q2-2.3",
+                "fr": "Documentation claire du code",
+                "en": "Clear documentation of the code"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "00Q8",
+        "title_fr": "Effectuer des opérations de prévention en matière de sécurité de l'information",
+        "title_en": "Carry out prevention operations with regard to information security",
+        "elements": [
+          {
+            "id": "00Q8-1",
+            "title_fr": "Évaluer les risques liés à la sécurité de l'information",
+            "title_en": "Assess information security risks",
+            "criteria": [
+              {
+                "id": "00Q8-1.1",
+                "fr": "Identification précise des vulnérabilités et des menaces",
+                "en": "Accurate identification of vulnerabilities and threats"
+              },
+              {
+                "id": "00Q8-1.2",
+                "fr": "Évaluation juste du niveau de risque pour l'organisation",
+                "en": "Accurate assessment of the level of risk to the organization"
+              }
+            ]
+          },
+          {
+            "id": "00Q8-2",
+            "title_fr": "Appliquer des mesures de prévention",
+            "title_en": "Apply preventive measures",
+            "criteria": [
+              {
+                "id": "00Q8-2.1",
+                "fr": "Mise en place correcte des mesures de sécurité appropriées",
+                "en": "Correct implementation of appropriate security measures"
+              },
+              {
+                "id": "00Q8-2.2",
+                "fr": "Respect des politiques et des normes de sécurité en vigueur",
+                "en": "Compliance with applicable security policies and standards"
+              },
+              {
+                "id": "00Q8-2.3",
+                "fr": "Sensibilisation adéquate des utilisatrices et utilisateurs aux bonnes pratiques",
+                "en": "Adequate awareness of best practices among users"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "00SE",
+        "title_fr": "Interagir dans un contexte professionnel",
+        "title_en": "Interact in a professional setting",
+        "elements": [
+          {
+            "id": "00SE-1",
+            "title_fr": "Établir des relations professionnelles avec les utilisateurs et les clients",
+            "title_en": "Establish professional relationships with users and clients",
+            "criteria": [
+              {
+                "id": "00SE-1.1",
+                "fr": "Attitudes et comportements démontrant la capacité d'écoute",
+                "en": "Attitudes and behaviors that demonstrate the ability to listen"
+              },
+              {
+                "id": "00SE-1.2",
+                "fr": "Adaptation du niveau de langage à la situation",
+                "en": "Adaptation of the level of language to the situation"
+              },
+              {
+                "id": "00SE-1.3",
+                "fr": "Respect des règles de politesse et de courtoisie",
+                "en": "Observance of rules of politeness and common courtesy"
+              },
+              {
+                "id": "00SE-1.4",
+                "fr": "Respect de l'approche client",
+                "en": "Observance of the client-based approach"
+              }
+            ]
+          },
+          {
+            "id": "00SE-2",
+            "title_fr": "Travailler au sein d'une équipe multidisciplinaire",
+            "title_en": "Work within a multidisciplinary team",
+            "criteria": [
+              {
+                "id": "00SE-2.1",
+                "fr": "Attitudes et comportements démontrant le respect, l'ouverture d'esprit et un esprit de collaboration",
+                "en": "Attitudes and behaviors that demonstrate respect, openness and a collaborative spirit"
+              },
+              {
+                "id": "00SE-2.2",
+                "fr": "Communication efficace avec tous les membres de l'équipe",
+                "en": "Effective communication with all team members"
+              },
+              {
+                "id": "00SE-2.3",
+                "fr": "Bonne exécution des tâches assignées",
+                "en": "Proper performance of assigned tasks"
+              },
+              {
+                "id": "00SE-2.4",
+                "fr": "Respect des règles pour un fonctionnement optimal de l'équipe",
+                "en": "Compliance with rules for optimal team function"
+              },
+              {
+                "id": "00SE-2.5",
+                "fr": "Respect de la culture d'entreprise",
+                "en": "Respect for the corporate culture"
+              },
+              {
+                "id": "00SE-2.6",
+                "fr": "Respect des normes, méthodes et meilleures pratiques en programmation applicative et en gestion de réseaux",
+                "en": "Compliance with application programming and network management standards, methods and best practices"
+              },
+              {
+                "id": "00SE-2.7",
+                "fr": "Respect des limites du champ d'intervention professionnelle et de l'expertise des membres de l'équipe dans d'autres métiers",
+                "en": "Observance of the limits of the scope of professional intervention and respect for the expertise of team members in other occupations"
+              },
+              {
+                "id": "00SE-2.8",
+                "fr": "Respect des délais",
+                "en": "Adherence to deadlines"
+              }
+            ]
+          },
+          {
+            "id": "00SE-3",
+            "title_fr": "Se familiariser avec les obligations légales et les règles d'éthique professionnelle",
+            "title_en": "Become familiar with the legal obligations and rules of professional ethics",
+            "criteria": [
+              {
+                "id": "00SE-3.1",
+                "fr": "Inventaire précis des principales infractions et actes criminels en technologies de l'information",
+                "en": "Accurate listing of the main offences and criminal acts in information technology"
+              },
+              {
+                "id": "00SE-3.2",
+                "fr": "Inventaire précis des principales violations des droits de propriété intellectuelle en technologies de l'information",
+                "en": "Accurate listing of the main breaches of intellectual property rights in information technology"
+              },
+              {
+                "id": "00SE-3.3",
+                "fr": "Évaluation juste des conséquences des infractions, actes criminels et violations de la propriété intellectuelle",
+                "en": "Accurate assessment of the consequences of offences, criminal acts and breaches of intellectual property"
+              },
+              {
+                "id": "00SE-3.4",
+                "fr": "Détermination des mesures appropriées à la situation",
+                "en": "Determination of the measures appropriate to the situation"
+              },
+              {
+                "id": "00SE-3.5",
+                "fr": "Respect des lois, des codes d'éthique et des politiques d'entreprise",
+                "en": "Compliance with laws, codes of ethics and corporate policies"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "00SF",
+        "title_fr": "Évaluer des composants logiciels et matériels",
+        "title_en": "Evaluate software and hardware components",
+        "elements": [
+          {
+            "id": "00SF-1",
+            "title_fr": "Analyser les besoins en composants",
+            "title_en": "Analyze component requirements",
+            "criteria": [
+              {
+                "id": "00SF-1.1",
+                "fr": "Collecte rigoureuse des besoins fonctionnels et techniques",
+                "en": "Rigorous collection of functional and technical requirements"
+              },
+              {
+                "id": "00SF-1.2",
+                "fr": "Comparaison pertinente des options disponibles",
+                "en": "Relevant comparison of available options"
+              }
+            ]
+          },
+          {
+            "id": "00SF-2",
+            "title_fr": "Formuler des recommandations",
+            "title_en": "Make recommendations",
+            "criteria": [
+              {
+                "id": "00SF-2.1",
+                "fr": "Recommandation justifiée et adaptée au contexte organisationnel",
+                "en": "Justified recommendation adapted to the organizational context"
+              },
+              {
+                "id": "00SF-2.2",
+                "fr": "Communication claire des avantages et des limites des solutions proposées",
+                "en": "Clear communication of the advantages and limitations of the proposed solutions"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "00SG",
+        "title_fr": "Fournir du soutien informatique aux utilisatrices et utilisateurs",
+        "title_en": "Provide users with technical support",
+        "elements": [
+          {
+            "id": "00SG-1",
+            "title_fr": "Diagnostiquer les problèmes techniques",
+            "title_en": "Diagnose technical problems",
+            "criteria": [
+              {
+                "id": "00SG-1.1",
+                "fr": "Collecte appropriée des informations sur le problème signalé",
+                "en": "Appropriate collection of information on the reported problem"
+              },
+              {
+                "id": "00SG-1.2",
+                "fr": "Identification correcte de la cause du problème",
+                "en": "Correct identification of the cause of the problem"
+              }
+            ]
+          },
+          {
+            "id": "00SG-2",
+            "title_fr": "Résoudre les problèmes et accompagner les utilisateurs",
+            "title_en": "Resolve problems and support users",
+            "criteria": [
+              {
+                "id": "00SG-2.1",
+                "fr": "Application efficace de la solution retenue",
+                "en": "Effective application of the chosen solution"
+              },
+              {
+                "id": "00SG-2.2",
+                "fr": "Communication claire et adaptée au niveau technique de l'utilisateur",
+                "en": "Clear communication adapted to the user's technical level"
+              },
+              {
+                "id": "00SG-2.3",
+                "fr": "Vérification de la satisfaction de l'utilisateur après l'intervention",
+                "en": "Verification of user satisfaction after the intervention"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "00SH",
+        "title_fr": "S'adapter à des technologies informatiques",
+        "title_en": "Adapt to information technologies",
+        "elements": [
+          {
+            "id": "00SH-1",
+            "title_fr": "Assurer une veille technologique",
+            "title_en": "Monitor technological developments",
+            "criteria": [
+              {
+                "id": "00SH-1.1",
+                "fr": "Recherche efficace de sources d'information",
+                "en": "Effective search for information sources"
+              },
+              {
+                "id": "00SH-1.2",
+                "fr": "Utilisation appropriée des outils de veille",
+                "en": "Appropriate use of monitoring tools"
+              },
+              {
+                "id": "00SH-1.3",
+                "fr": "Analyse juste des informations recueillies",
+                "en": "Accurate analysis of the information collected"
+              },
+              {
+                "id": "00SH-1.4",
+                "fr": "Identification précise des technologies à tester",
+                "en": "Accurate identification of the technologies to test"
+              }
+            ]
+          },
+          {
+            "id": "00SH-2",
+            "title_fr": "Tester des technologies logicielles et matérielles",
+            "title_en": "Test software and hardware technology",
+            "criteria": [
+              {
+                "id": "00SH-2.1",
+                "fr": "Branchement approprié du matériel informatique et des périphériques nécessaires",
+                "en": "Proper connection of computer equipment and the necessary peripheral devices"
+              },
+              {
+                "id": "00SH-2.2",
+                "fr": "Installation correcte des applications ou outils de programmation nécessaires",
+                "en": "Proper installation of the necessary programming applications or tools"
+              },
+              {
+                "id": "00SH-2.3",
+                "fr": "Test adéquat de la technologie",
+                "en": "Adequate testing of the technology"
+              },
+              {
+                "id": "00SH-2.4",
+                "fr": "Attitudes et comportements démontrant l'autonomie et l'ouverture d'esprit",
+                "en": "Attitudes and behaviours that demonstrate self-reliance and open-mindedness"
+              }
+            ]
+          },
+          {
+            "id": "00SH-3",
+            "title_fr": "Rédiger des avis technologiques",
+            "title_en": "Draw up technological opinions",
+            "criteria": [
+              {
+                "id": "00SH-3.1",
+                "fr": "Participation active aux discussions",
+                "en": "Active participation in discussions"
+              },
+              {
+                "id": "00SH-3.2",
+                "fr": "Justification satisfaisante du potentiel de la technologie",
+                "en": "Satisfactory justification of the technology's potential"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "420-SG4-AS"
+  },
+  "LEA.99": {
+    "label_fr": "Gestion de réseaux et sécurité (AEC)",
+    "outcomes": [
+      "Installation et administration de réseaux informatiques",
+      "Sécurisation des systèmes et gestion des accès",
+      "Surveillance et maintenance de l'infrastructure réseau",
+      "Support technique et dépannage réseau"
+    ],
+    "_note": "No dedicated page found on website — outcomes inferred from program name and 420.BR alignment"
+  },
+  "LEA.DQ": {
+    "label_fr": "Intelligence artificielle et apprentissage automatique (AEC)",
+    "outcomes": [
+      "Application des concepts mathématiques pour créer des modèles et solutions en informatique",
+      "Préparation et exploration de données, choix des algorithmes appropriés",
+      "Intégration interdisciplinaire pour générer des résultats décisionnels à valeur ajoutée",
+      "Apprentissage automatique : fonctionnement et application pratique",
+      "Applications en FinTech, jeux vidéo et cybersécurité",
+      "Analyse de données et intelligence d'affaires"
+    ],
+    "competencies": [
+      {
+        "code": "KP46",
+        "title_fr": "Analyser des données",
+        "title_en": "Analyze data",
+        "elements": [
+          {
+            "id": "KP46-1",
+            "title_fr": "Préparer les données",
+            "title_en": "Prepare data",
+            "criteria": [
+              {
+                "id": "KP46-1.1",
+                "fr": "Collecte appropriée des données pertinentes",
+                "en": "Appropriate collection of relevant data"
+              },
+              {
+                "id": "KP46-1.2",
+                "fr": "Nettoyage et prétraitement corrects des données",
+                "en": "Correct cleaning and preprocessing of data"
+              },
+              {
+                "id": "KP46-1.3",
+                "fr": "Transformation adéquate des données pour l'analyse",
+                "en": "Adequate transformation of data for analysis"
+              }
+            ]
+          },
+          {
+            "id": "KP46-2",
+            "title_fr": "Analyser les données",
+            "title_en": "Analyze data",
+            "criteria": [
+              {
+                "id": "KP46-2.1",
+                "fr": "Application correcte des méthodes d'analyse statistique",
+                "en": "Correct application of statistical analysis methods"
+              },
+              {
+                "id": "KP46-2.2",
+                "fr": "Interprétation juste des résultats d'analyse",
+                "en": "Accurate interpretation of analysis results"
+              },
+              {
+                "id": "KP46-2.3",
+                "fr": "Documentation claire des conclusions",
+                "en": "Clear documentation of findings"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "KP49",
+        "title_fr": "Concevoir des modèles d'apprentissage automatique",
+        "title_en": "Design machine learning models",
+        "elements": [
+          {
+            "id": "KP49-1",
+            "title_fr": "Sélectionner les algorithmes appropriés",
+            "title_en": "Select appropriate algorithms",
+            "criteria": [
+              {
+                "id": "KP49-1.1",
+                "fr": "Évaluation juste des besoins du problème",
+                "en": "Accurate assessment of problem requirements"
+              },
+              {
+                "id": "KP49-1.2",
+                "fr": "Sélection justifiée des algorithmes d'apprentissage automatique",
+                "en": "Justified selection of machine learning algorithms"
+              }
+            ]
+          },
+          {
+            "id": "KP49-2",
+            "title_fr": "Entraîner et évaluer les modèles",
+            "title_en": "Train and evaluate models",
+            "criteria": [
+              {
+                "id": "KP49-2.1",
+                "fr": "Configuration correcte des paramètres d'entraînement",
+                "en": "Correct configuration of training parameters"
+              },
+              {
+                "id": "KP49-2.2",
+                "fr": "Évaluation rigoureuse des performances du modèle",
+                "en": "Rigorous evaluation of model performance"
+              },
+              {
+                "id": "KP49-2.3",
+                "fr": "Ajustements appropriés pour améliorer les performances",
+                "en": "Appropriate adjustments to improve performance"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "KP50",
+        "title_fr": "Déployer des solutions d'intelligence artificielle",
+        "title_en": "Deploy artificial intelligence solutions",
+        "elements": [
+          {
+            "id": "KP50-1",
+            "title_fr": "Préparer le déploiement",
+            "title_en": "Prepare deployment",
+            "criteria": [
+              {
+                "id": "KP50-1.1",
+                "fr": "Préparation adéquate de l'environnement de déploiement",
+                "en": "Adequate preparation of deployment environment"
+              },
+              {
+                "id": "KP50-1.2",
+                "fr": "Documentation complète de la solution",
+                "en": "Complete documentation of the solution"
+              }
+            ]
+          },
+          {
+            "id": "KP50-2",
+            "title_fr": "Déployer et surveiller la solution",
+            "title_en": "Deploy and monitor the solution",
+            "criteria": [
+              {
+                "id": "KP50-2.1",
+                "fr": "Déploiement correct de la solution en production",
+                "en": "Correct deployment of solution to production"
+              },
+              {
+                "id": "KP50-2.2",
+                "fr": "Mise en place efficace du suivi des performances",
+                "en": "Effective performance monitoring setup"
+              },
+              {
+                "id": "KP50-2.3",
+                "fr": "Réponse appropriée aux incidents de production",
+                "en": "Appropriate response to production incidents"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "KP57",
+        "title_fr": "Assurer la qualité des solutions d'IA",
+        "title_en": "Ensure quality of AI solutions",
+        "elements": [
+          {
+            "id": "KP57-1",
+            "title_fr": "Tester les solutions",
+            "title_en": "Test solutions",
+            "criteria": [
+              {
+                "id": "KP57-1.1",
+                "fr": "Conception adéquate des plans de test",
+                "en": "Adequate design of test plans"
+              },
+              {
+                "id": "KP57-1.2",
+                "fr": "Exécution rigoureuse des tests",
+                "en": "Rigorous execution of tests"
+              },
+              {
+                "id": "KP57-1.3",
+                "fr": "Documentation précise des résultats de test",
+                "en": "Accurate documentation of test results"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "KP58",
+        "title_fr": "Gérer des projets en intelligence artificielle",
+        "title_en": "Manage artificial intelligence projects",
+        "elements": [
+          {
+            "id": "KP58-1",
+            "title_fr": "Planifier le projet",
+            "title_en": "Plan the project",
+            "criteria": [
+              {
+                "id": "KP58-1.1",
+                "fr": "Définition claire des objectifs et livrables",
+                "en": "Clear definition of objectives and deliverables"
+              },
+              {
+                "id": "KP58-1.2",
+                "fr": "Planification réaliste des ressources et des échéanciers",
+                "en": "Realistic planning of resources and timelines"
+              }
+            ]
+          },
+          {
+            "id": "KP58-2",
+            "title_fr": "Suivre et contrôler le projet",
+            "title_en": "Monitor and control the project",
+            "criteria": [
+              {
+                "id": "KP58-2.1",
+                "fr": "Suivi régulier de l'avancement du projet",
+                "en": "Regular monitoring of project progress"
+              },
+              {
+                "id": "KP58-2.2",
+                "fr": "Gestion efficace des risques et des imprévus",
+                "en": "Effective management of risks and unexpected events"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "KP60",
+        "title_fr": "Communiquer sur les solutions d'IA",
+        "title_en": "Communicate about AI solutions",
+        "elements": [
+          {
+            "id": "KP60-1",
+            "title_fr": "Rédiger de la documentation technique",
+            "title_en": "Write technical documentation",
+            "criteria": [
+              {
+                "id": "KP60-1.1",
+                "fr": "Clarté et précision de la documentation technique",
+                "en": "Clarity and accuracy of technical documentation"
+              },
+              {
+                "id": "KP60-1.2",
+                "fr": "Adaptation du niveau de détail au public cible",
+                "en": "Appropriate level of detail for target audience"
+              }
+            ]
+          },
+          {
+            "id": "KP60-2",
+            "title_fr": "Présenter les solutions",
+            "title_en": "Present solutions",
+            "criteria": [
+              {
+                "id": "KP60-2.1",
+                "fr": "Présentation claire et structurée des résultats",
+                "en": "Clear and structured presentation of results"
+              },
+              {
+                "id": "KP60-2.2",
+                "fr": "Réponses pertinentes aux questions des parties prenantes",
+                "en": "Relevant responses to stakeholder questions"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "KP61",
+        "title_fr": "Respecter les considérations éthiques en IA",
+        "title_en": "Respect ethical considerations in AI",
+        "elements": [
+          {
+            "id": "KP61-1",
+            "title_fr": "Identifier les enjeux éthiques",
+            "title_en": "Identify ethical issues",
+            "criteria": [
+              {
+                "id": "KP61-1.1",
+                "fr": "Identification précise des biais potentiels dans les données et modèles",
+                "en": "Accurate identification of potential biases in data and models"
+              },
+              {
+                "id": "KP61-1.2",
+                "fr": "Évaluation des impacts sociaux et éthiques de la solution",
+                "en": "Assessment of social and ethical impacts of the solution"
+              }
+            ]
+          },
+          {
+            "id": "KP61-2",
+            "title_fr": "Appliquer des pratiques éthiques",
+            "title_en": "Apply ethical practices",
+            "criteria": [
+              {
+                "id": "KP61-2.1",
+                "fr": "Intégration des principes d'équité et de transparence dans les solutions",
+                "en": "Integration of fairness and transparency principles in solutions"
+              },
+              {
+                "id": "KP61-2.2",
+                "fr": "Respect des cadres réglementaires applicables",
+                "en": "Compliance with applicable regulatory frameworks"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "420-A24-AS"
+  },
+  "570.E0": {
+    "label_fr": "Techniques de design d'intérieur (DEC)",
+    "outcomes": [
+      "Création d'espaces intérieurs fonctionnels et esthétiquement plaisants",
+      "Amélioration de l'ambiance et de l'atmosphère des environnements intérieurs",
+      "Connaissance des codes du bâtiment, réglementations et pratiques durables",
+      "Conception d'espaces sécuritaires et conformes aux normes",
+      "Présentation de concepts de design aux clients",
+      "Collaboration avec clients, entrepreneurs et collègues"
+    ],
+    "competencies": [
+      {
+        "code": "022A",
+        "title_fr": "Analyser la fonction des composantes d'un espace",
+        "title_en": "Analyze the function of space components",
+        "elements": [
+          {
+            "id": "022A-1",
+            "title_fr": "Analyser les besoins du client",
+            "title_en": "Analyze client needs",
+            "criteria": [
+              {
+                "id": "022A-1.1",
+                "fr": "Collecte complète des informations sur les besoins fonctionnels",
+                "en": "Complete collection of information on functional needs"
+              },
+              {
+                "id": "022A-1.2",
+                "fr": "Analyse juste des contraintes spatiales",
+                "en": "Accurate analysis of spatial constraints"
+              }
+            ]
+          },
+          {
+            "id": "022A-2",
+            "title_fr": "Évaluer l'espace existant",
+            "title_en": "Evaluate the existing space",
+            "criteria": [
+              {
+                "id": "022A-2.1",
+                "fr": "Relevé précis des dimensions et caractéristiques de l'espace",
+                "en": "Accurate survey of space dimensions and characteristics"
+              },
+              {
+                "id": "022A-2.2",
+                "fr": "Identification pertinente des contraintes architecturales",
+                "en": "Relevant identification of architectural constraints"
+              }
+            ]
+          },
+          {
+            "id": "022A-3",
+            "title_fr": "Documenter l'analyse",
+            "title_en": "Document the analysis",
+            "criteria": [
+              {
+                "id": "022A-3.1",
+                "fr": "Rédaction claire du rapport d'analyse",
+                "en": "Clear writing of the analysis report"
+              },
+              {
+                "id": "022A-3.2",
+                "fr": "Présentation structurée des conclusions",
+                "en": "Structured presentation of findings"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "022G",
+        "title_fr": "Concevoir un aménagement intérieur",
+        "title_en": "Design an interior layout",
+        "elements": [
+          {
+            "id": "022G-1",
+            "title_fr": "Élaborer des concepts de design",
+            "title_en": "Develop design concepts",
+            "criteria": [
+              {
+                "id": "022G-1.1",
+                "fr": "Cohérence du concept avec les besoins identifiés",
+                "en": "Consistency of concept with identified needs"
+              },
+              {
+                "id": "022G-1.2",
+                "fr": "Originalité et pertinence des solutions proposées",
+                "en": "Originality and relevance of proposed solutions"
+              }
+            ]
+          },
+          {
+            "id": "022G-2",
+            "title_fr": "Produire les documents de conception",
+            "title_en": "Produce design documents",
+            "criteria": [
+              {
+                "id": "022G-2.1",
+                "fr": "Précision technique des plans et dessins",
+                "en": "Technical accuracy of plans and drawings"
+              },
+              {
+                "id": "022G-2.2",
+                "fr": "Respect des normes de représentation graphique",
+                "en": "Compliance with graphic representation standards"
+              }
+            ]
+          },
+          {
+            "id": "022G-3",
+            "title_fr": "Présenter le projet au client",
+            "title_en": "Present the project to the client",
+            "criteria": [
+              {
+                "id": "022G-3.1",
+                "fr": "Clarté de la présentation du concept",
+                "en": "Clarity of concept presentation"
+              },
+              {
+                "id": "022G-3.2",
+                "fr": "Justification convaincante des choix de design",
+                "en": "Convincing justification of design choices"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "570-ST1-AS"
+  },
+  "NTA.21": {
+    "label_fr": "Techniques de design d'intérieur (AEC)",
+    "outcomes": [
+      "Création d'espaces intérieurs fonctionnels et esthétiquement plaisants pour contextes résidentiels, commerciaux et institutionnels",
+      "Maîtrise des logiciels professionnels de design d'intérieur",
+      "Application des codes du bâtiment et des réglementations",
+      "Conception durable et respectueuse de l'environnement",
+      "Présentation de concepts aux clients",
+      "Coordination avec entrepreneurs et fournisseurs"
+    ],
+    "competencies": [
+      {
+        "code": "022A",
+        "title_fr": "Analyser la fonction des composantes d'un espace",
+        "title_en": "Analyze the function of space components",
+        "elements": [
+          {
+            "id": "022A-1",
+            "title_fr": "Analyser les besoins du client",
+            "title_en": "Analyze client needs",
+            "criteria": [
+              {
+                "id": "022A-1.1",
+                "fr": "Collecte complète des informations sur les besoins fonctionnels",
+                "en": "Complete collection of information on functional needs"
+              },
+              {
+                "id": "022A-1.2",
+                "fr": "Analyse juste des contraintes spatiales",
+                "en": "Accurate analysis of spatial constraints"
+              }
+            ]
+          },
+          {
+            "id": "022A-2",
+            "title_fr": "Évaluer l'espace existant",
+            "title_en": "Evaluate the existing space",
+            "criteria": [
+              {
+                "id": "022A-2.1",
+                "fr": "Relevé précis des dimensions et caractéristiques de l'espace",
+                "en": "Accurate survey of space dimensions and characteristics"
+              },
+              {
+                "id": "022A-2.2",
+                "fr": "Identification pertinente des contraintes architecturales",
+                "en": "Relevant identification of architectural constraints"
+              }
+            ]
+          },
+          {
+            "id": "022A-3",
+            "title_fr": "Documenter l'analyse",
+            "title_en": "Document the analysis",
+            "criteria": [
+              {
+                "id": "022A-3.1",
+                "fr": "Rédaction claire du rapport d'analyse",
+                "en": "Clear writing of the analysis report"
+              },
+              {
+                "id": "022A-3.2",
+                "fr": "Présentation structurée des conclusions",
+                "en": "Structured presentation of findings"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "022G",
+        "title_fr": "Concevoir un aménagement intérieur",
+        "title_en": "Design an interior layout",
+        "elements": [
+          {
+            "id": "022G-1",
+            "title_fr": "Élaborer des concepts de design",
+            "title_en": "Develop design concepts",
+            "criteria": [
+              {
+                "id": "022G-1.1",
+                "fr": "Cohérence du concept avec les besoins identifiés",
+                "en": "Consistency of concept with identified needs"
+              },
+              {
+                "id": "022G-1.2",
+                "fr": "Originalité et pertinence des solutions proposées",
+                "en": "Originality and relevance of proposed solutions"
+              }
+            ]
+          },
+          {
+            "id": "022G-2",
+            "title_fr": "Produire les documents de conception",
+            "title_en": "Produce design documents",
+            "criteria": [
+              {
+                "id": "022G-2.1",
+                "fr": "Précision technique des plans et dessins",
+                "en": "Technical accuracy of plans and drawings"
+              },
+              {
+                "id": "022G-2.2",
+                "fr": "Respect des normes de représentation graphique",
+                "en": "Compliance with graphic representation standards"
+              }
+            ]
+          },
+          {
+            "id": "022G-3",
+            "title_fr": "Présenter le projet au client",
+            "title_en": "Present the project to the client",
+            "criteria": [
+              {
+                "id": "022G-3.1",
+                "fr": "Clarté de la présentation du concept",
+                "en": "Clarity of concept presentation"
+              },
+              {
+                "id": "022G-3.2",
+                "fr": "Justification convaincante des choix de design",
+                "en": "Convincing justification of design choices"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "570-ST1-AS"
+  },
+  "571.A0": {
+    "label_fr": "Design de la mode (DEC)",
+    "outcomes": [
+      "Conception de collections de vêtements originaux, du concept à la fabrication",
+      "Maîtrise des techniques de patronage, coupe et assemblage",
+      "Recherche et analyse des tendances de l'industrie de la mode",
+      "Développement de stratégies créatives et de présentation de collections",
+      "Connaissance des matériaux textiles et des procédés de fabrication",
+      "Compétences en dessin de mode et illustration"
+    ],
+    "competencies": [
+      {
+        "code": "00TW",
+        "title_fr": "Élaborer des projets de collection pour des marchés visés",
+        "title_en": "Develop collection projects for target markets",
+        "elements": [
+          {
+            "id": "00TW-1",
+            "title_fr": "Analyser les marchés cibles et les tendances",
+            "title_en": "Analyze target markets and trends",
+            "criteria": [
+              {
+                "id": "00TW-1.1",
+                "fr": "Identification précise des caractéristiques des marchés visés",
+                "en": "Accurate identification of target market characteristics"
+              },
+              {
+                "id": "00TW-1.2",
+                "fr": "Analyse pertinente des tendances de la mode et du contexte commercial",
+                "en": "Relevant analysis of fashion trends and commercial context"
+              }
+            ]
+          },
+          {
+            "id": "00TW-2",
+            "title_fr": "Concevoir et développer la collection",
+            "title_en": "Design and develop the collection",
+            "criteria": [
+              {
+                "id": "00TW-2.1",
+                "fr": "Cohérence de la collection avec l'identité de la marque et le marché cible",
+                "en": "Coherence of the collection with the brand identity and target market"
+              },
+              {
+                "id": "00TW-2.2",
+                "fr": "Application rigoureuse des techniques de design de mode",
+                "en": "Rigorous application of fashion design techniques"
+              },
+              {
+                "id": "00TW-2.3",
+                "fr": "Respect des contraintes de production et de budget",
+                "en": "Compliance with production and budget constraints"
+              }
+            ]
+          },
+          {
+            "id": "00TW-3",
+            "title_fr": "Présenter et défendre les projets de collection",
+            "title_en": "Present and defend collection projects",
+            "criteria": [
+              {
+                "id": "00TW-3.1",
+                "fr": "Présentation claire et professionnelle de la collection",
+                "en": "Clear and professional presentation of the collection"
+              },
+              {
+                "id": "00TW-3.2",
+                "fr": "Argumentation convaincante des choix créatifs et commerciaux",
+                "en": "Convincing argumentation of creative and commercial choices"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "571-KY7-AS"
+  },
+  "NTC.0Q": {
+    "label_fr": "Design de la mode (AEC)",
+    "outcomes": [
+      "Conception de collections de vêtements et accessoires originaux",
+      "Maîtrise des techniques de production : patronage, prototypage, coupe",
+      "Développement de stratégies marketing pour les créations",
+      "Analyse de marché et positionnement de la marque",
+      "Maîtrise du design numérique pour la mode"
+    ],
+    "competencies": [
+      {
+        "code": "00TW",
+        "title_fr": "Élaborer des projets de collection pour des marchés visés",
+        "title_en": "Develop collection projects for target markets",
+        "elements": [
+          {
+            "id": "00TW-1",
+            "title_fr": "Analyser les marchés cibles et les tendances",
+            "title_en": "Analyze target markets and trends",
+            "criteria": [
+              {
+                "id": "00TW-1.1",
+                "fr": "Identification précise des caractéristiques des marchés visés",
+                "en": "Accurate identification of target market characteristics"
+              },
+              {
+                "id": "00TW-1.2",
+                "fr": "Analyse pertinente des tendances de la mode et du contexte commercial",
+                "en": "Relevant analysis of fashion trends and commercial context"
+              }
+            ]
+          },
+          {
+            "id": "00TW-2",
+            "title_fr": "Concevoir et développer la collection",
+            "title_en": "Design and develop the collection",
+            "criteria": [
+              {
+                "id": "00TW-2.1",
+                "fr": "Cohérence de la collection avec l'identité de la marque et le marché cible",
+                "en": "Coherence of the collection with the brand identity and target market"
+              },
+              {
+                "id": "00TW-2.2",
+                "fr": "Application rigoureuse des techniques de design de mode",
+                "en": "Rigorous application of fashion design techniques"
+              },
+              {
+                "id": "00TW-2.3",
+                "fr": "Respect des contraintes de production et de budget",
+                "en": "Compliance with production and budget constraints"
+              }
+            ]
+          },
+          {
+            "id": "00TW-3",
+            "title_fr": "Présenter et défendre les projets de collection",
+            "title_en": "Present and defend collection projects",
+            "criteria": [
+              {
+                "id": "00TW-3.1",
+                "fr": "Présentation claire et professionnelle de la collection",
+                "en": "Clear and professional presentation of the collection"
+              },
+              {
+                "id": "00TW-3.2",
+                "fr": "Argumentation convaincante des choix créatifs et commerciaux",
+                "en": "Convincing argumentation of creative and commercial choices"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "571-KY7-AS"
+  },
+  "571.C0": {
+    "label_fr": "Commercialisation de la mode (DEC)",
+    "outcomes": [
+      "Développement et mise en œuvre de stratégies marketing pour la mode",
+      "Gestion commerciale et développement des ventes dans l'industrie de la mode",
+      "Analyse des tendances et positionnement de produits",
+      "Organisation d'événements mode et expériences clientèle",
+      "Gestion de la chaîne d'approvisionnement dans la mode",
+      "Commerce électronique et marketing numérique appliqués à la mode"
+    ],
+    "competencies": [
+      {
+        "code": "00X1",
+        "title_fr": "Relier les activités de commercialisation au fonctionnement d'une entreprise de mode",
+        "title_en": "Link marketing activities to the operations of a fashion business",
+        "elements": [
+          {
+            "id": "00X1-1",
+            "title_fr": "Analyser le fonctionnement de l'entreprise de mode",
+            "title_en": "Analyze the operations of the fashion business",
+            "criteria": [
+              {
+                "id": "00X1-1.1",
+                "fr": "Compréhension juste de la structure organisationnelle et des processus internes",
+                "en": "Accurate understanding of the organizational structure and internal processes"
+              },
+              {
+                "id": "00X1-1.2",
+                "fr": "Identification précise des liens entre les différentes fonctions de l'entreprise",
+                "en": "Accurate identification of links between the various business functions"
+              }
+            ]
+          },
+          {
+            "id": "00X1-2",
+            "title_fr": "Relier les activités de commercialisation aux opérations de l'entreprise",
+            "title_en": "Link marketing activities to business operations",
+            "criteria": [
+              {
+                "id": "00X1-2.1",
+                "fr": "Intégration cohérente des activités de commercialisation dans les opérations globales de l'entreprise",
+                "en": "Coherent integration of marketing activities into the overall operations of the business"
+              },
+              {
+                "id": "00X1-2.2",
+                "fr": "Application appropriée des stratégies de commercialisation adaptées au contexte de la mode",
+                "en": "Appropriate application of marketing strategies adapted to the fashion context"
+              },
+              {
+                "id": "00X1-2.3",
+                "fr": "Évaluation rigoureuse des résultats des actions de commercialisation",
+                "en": "Rigorous evaluation of the results of marketing actions"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "571-KQ9-AS"
+  },
+  "NTC.1W": {
+    "label_fr": "Commercialisation de la mode (AEC)",
+    "outcomes": [
+      "Développement de stratégies marketing et commerciales pour la mode",
+      "Entrepreneuriat et développement de marque dans l'industrie de la mode",
+      "Gestion de produits et commerce électronique",
+      "Marketing numérique appliqué à la mode",
+      "Gestion des relations clients et développement des ventes"
+    ],
+    "competencies": [
+      {
+        "code": "00X1",
+        "title_fr": "Relier les activités de commercialisation au fonctionnement d'une entreprise de mode",
+        "title_en": "Link marketing activities to the operations of a fashion business",
+        "elements": [
+          {
+            "id": "00X1-1",
+            "title_fr": "Analyser le fonctionnement de l'entreprise de mode",
+            "title_en": "Analyze the operations of the fashion business",
+            "criteria": [
+              {
+                "id": "00X1-1.1",
+                "fr": "Compréhension juste de la structure organisationnelle et des processus internes",
+                "en": "Accurate understanding of the organizational structure and internal processes"
+              },
+              {
+                "id": "00X1-1.2",
+                "fr": "Identification précise des liens entre les différentes fonctions de l'entreprise",
+                "en": "Accurate identification of links between the various business functions"
+              }
+            ]
+          },
+          {
+            "id": "00X1-2",
+            "title_fr": "Relier les activités de commercialisation aux opérations de l'entreprise",
+            "title_en": "Link marketing activities to business operations",
+            "criteria": [
+              {
+                "id": "00X1-2.1",
+                "fr": "Intégration cohérente des activités de commercialisation dans les opérations globales de l'entreprise",
+                "en": "Coherent integration of marketing activities into the overall operations of the business"
+              },
+              {
+                "id": "00X1-2.2",
+                "fr": "Application appropriée des stratégies de commercialisation adaptées au contexte de la mode",
+                "en": "Appropriate application of marketing strategies adapted to the fashion context"
+              },
+              {
+                "id": "00X1-2.3",
+                "fr": "Évaluation rigoureuse des résultats des actions de commercialisation",
+                "en": "Rigorous evaluation of the results of marketing actions"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "571-KQ9-AS"
+  },
+  "410.G0": {
+    "label_fr": "Techniques de la logistique du transport (DEC)",
+    "outcomes": [
+      "Planification et coordination des opérations de transport et de logistique",
+      "Gestion des stocks, des entrepôts et de la chaîne d'approvisionnement",
+      "Optimisation des flux de marchandises et réduction des coûts",
+      "Utilisation des systèmes d'information logistique",
+      "Connaissance des réglementations du transport national et international",
+      "Gestion des relations avec les fournisseurs et les transporteurs"
+    ],
+    "_note": "Outcomes inferred from program name and field — no dedicated page found on site"
+  },
+  "LCA.5G": {
+    "label_fr": "Logistique du transport (AEC)",
+    "outcomes": [
+      "Coordination des opérations de transport et de distribution",
+      "Gestion des stocks et de la chaîne d'approvisionnement",
+      "Optimisation logistique et réduction des délais",
+      "Utilisation des outils de gestion logistique",
+      "Application des réglementations du transport"
+    ],
+    "_note": "Outcomes inferred from program name — no dedicated page found on site",
+    "competencies": [
+      {
+        "code": "00N2",
+        "title_fr": "Établir des relations professionnelles",
+        "title_en": "Establish professional relationships",
+        "elements": [
+          {
+            "id": "00N2-1",
+            "title_fr": "Communiquer en milieu de travail",
+            "title_en": "Communicate in the workplace",
+            "criteria": [
+              {
+                "id": "00N2-1.1",
+                "fr": "Utilisation appropriée des modes de communication professionnelle",
+                "en": "Appropriate use of professional communication modes"
+              },
+              {
+                "id": "00N2-1.2",
+                "fr": "Clarté et précision des messages transmis",
+                "en": "Clarity and accuracy of transmitted messages"
+              },
+              {
+                "id": "00N2-1.3",
+                "fr": "Écoute active et reformulation efficace",
+                "en": "Active listening and effective reformulation"
+              }
+            ]
+          },
+          {
+            "id": "00N2-2",
+            "title_fr": "Travailler en équipe",
+            "title_en": "Work as part of a team",
+            "criteria": [
+              {
+                "id": "00N2-2.1",
+                "fr": "Contribution active au travail d'équipe",
+                "en": "Active contribution to team work"
+              },
+              {
+                "id": "00N2-2.2",
+                "fr": "Respect des rôles et responsabilités de chacun",
+                "en": "Respect for each person's roles and responsibilities"
+              },
+              {
+                "id": "00N2-2.3",
+                "fr": "Gestion constructive des désaccords",
+                "en": "Constructive management of disagreements"
+              }
+            ]
+          },
+          {
+            "id": "00N2-3",
+            "title_fr": "Développer son réseau professionnel",
+            "title_en": "Develop professional network",
+            "criteria": [
+              {
+                "id": "00N2-3.1",
+                "fr": "Identification des contacts professionnels pertinents",
+                "en": "Identification of relevant professional contacts"
+              },
+              {
+                "id": "00N2-3.2",
+                "fr": "Entretien proactif des relations professionnelles",
+                "en": "Proactive maintenance of professional relationships"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "410-L15-AS"
+  },
+  "410.B0": {
+    "label_fr": "Comptabilité (DEC)",
+    "outcomes": [
+      "Tenue de livres et comptabilité générale",
+      "Préparation des états financiers",
+      "Gestion de la paie et des comptes clients et fournisseurs",
+      "Application des normes comptables et fiscales québécoises",
+      "Utilisation des logiciels comptables professionnels",
+      "Analyse financière et production de rapports"
+    ],
+    "_note": "Outcomes inferred from program name — no dedicated page found on site",
+    "competencies": [
+      {
+        "code": "01HY",
+        "title_fr": "Assurer son intégration au marché du travail",
+        "title_en": "Participate in integration into the job market",
+        "elements": [
+          {
+            "id": "01HY-1",
+            "title_fr": "Analyser le marché du travail",
+            "title_en": "Analyze the job market",
+            "criteria": [
+              {
+                "id": "01HY-1.1",
+                "fr": "Identification juste des secteurs d'activité liés à la comptabilité",
+                "en": "Accurate identification of accounting-related sectors"
+              },
+              {
+                "id": "01HY-1.2",
+                "fr": "Analyse pertinente des tendances du marché de l'emploi",
+                "en": "Relevant analysis of employment market trends"
+              }
+            ]
+          },
+          {
+            "id": "01HY-2",
+            "title_fr": "Préparer sa recherche d'emploi",
+            "title_en": "Prepare for job search",
+            "criteria": [
+              {
+                "id": "01HY-2.1",
+                "fr": "Rédaction soignée du curriculum vitae",
+                "en": "Careful preparation of the curriculum vitae"
+              },
+              {
+                "id": "01HY-2.2",
+                "fr": "Rédaction appropriée de la lettre de présentation",
+                "en": "Appropriate writing of the cover letter"
+              }
+            ]
+          },
+          {
+            "id": "01HY-3",
+            "title_fr": "Se préparer à l'entrevue",
+            "title_en": "Prepare for the interview",
+            "criteria": [
+              {
+                "id": "01HY-3.1",
+                "fr": "Préparation adéquate aux questions d'entrevue courantes",
+                "en": "Adequate preparation for common interview questions"
+              },
+              {
+                "id": "01HY-3.2",
+                "fr": "Présentation personnelle appropriée au contexte professionnel",
+                "en": "Personal presentation appropriate to a professional context"
+              }
+            ]
+          },
+          {
+            "id": "01HY-4",
+            "title_fr": "S'intégrer en milieu de travail",
+            "title_en": "Integrate into the workplace",
+            "criteria": [
+              {
+                "id": "01HY-4.1",
+                "fr": "Adaptation rapide aux normes et à la culture de l'entreprise",
+                "en": "Quick adaptation to company norms and culture"
+              },
+              {
+                "id": "01HY-4.2",
+                "fr": "Établissement de relations professionnelles positives",
+                "en": "Establishment of positive professional relationships"
+              }
+            ]
+          },
+          {
+            "id": "01HY-5",
+            "title_fr": "Évaluer son intégration",
+            "title_en": "Evaluate integration",
+            "criteria": [
+              {
+                "id": "01HY-5.1",
+                "fr": "Autoévaluation honnête de sa performance en stage",
+                "en": "Honest self-assessment of internship performance"
+              },
+              {
+                "id": "01HY-5.2",
+                "fr": "Identification pertinente des axes d'amélioration",
+                "en": "Relevant identification of areas for improvement"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "410-BU7-AS"
+  },
+  "LCA.71": {
+    "label_fr": "Comptabilité (AEC)",
+    "outcomes": [
+      "Tenue de livres et comptabilité générale",
+      "Préparation des états financiers",
+      "Gestion de la paie, comptes clients et fournisseurs",
+      "Application des normes comptables et fiscales",
+      "Utilisation des logiciels comptables",
+      "Production de rapports financiers"
+    ],
+    "_note": "Outcomes inferred from program name — no dedicated page found on site",
+    "competencies": [
+      {
+        "code": "01HY",
+        "title_fr": "Assurer son intégration au marché du travail",
+        "title_en": "Participate in integration into the job market",
+        "elements": [
+          {
+            "id": "01HY-1",
+            "title_fr": "Analyser le marché du travail",
+            "title_en": "Analyze the job market",
+            "criteria": [
+              {
+                "id": "01HY-1.1",
+                "fr": "Identification juste des secteurs d'activité liés à la comptabilité",
+                "en": "Accurate identification of accounting-related sectors"
+              },
+              {
+                "id": "01HY-1.2",
+                "fr": "Analyse pertinente des tendances du marché de l'emploi",
+                "en": "Relevant analysis of employment market trends"
+              }
+            ]
+          },
+          {
+            "id": "01HY-2",
+            "title_fr": "Préparer sa recherche d'emploi",
+            "title_en": "Prepare for job search",
+            "criteria": [
+              {
+                "id": "01HY-2.1",
+                "fr": "Rédaction soignée du curriculum vitae",
+                "en": "Careful preparation of the curriculum vitae"
+              },
+              {
+                "id": "01HY-2.2",
+                "fr": "Rédaction appropriée de la lettre de présentation",
+                "en": "Appropriate writing of the cover letter"
+              }
+            ]
+          },
+          {
+            "id": "01HY-3",
+            "title_fr": "Se préparer à l'entrevue",
+            "title_en": "Prepare for the interview",
+            "criteria": [
+              {
+                "id": "01HY-3.1",
+                "fr": "Préparation adéquate aux questions d'entrevue courantes",
+                "en": "Adequate preparation for common interview questions"
+              },
+              {
+                "id": "01HY-3.2",
+                "fr": "Présentation personnelle appropriée au contexte professionnel",
+                "en": "Personal presentation appropriate to a professional context"
+              }
+            ]
+          },
+          {
+            "id": "01HY-4",
+            "title_fr": "S'intégrer en milieu de travail",
+            "title_en": "Integrate into the workplace",
+            "criteria": [
+              {
+                "id": "01HY-4.1",
+                "fr": "Adaptation rapide aux normes et à la culture de l'entreprise",
+                "en": "Quick adaptation to company norms and culture"
+              },
+              {
+                "id": "01HY-4.2",
+                "fr": "Établissement de relations professionnelles positives",
+                "en": "Establishment of positive professional relationships"
+              }
+            ]
+          },
+          {
+            "id": "01HY-5",
+            "title_fr": "Évaluer son intégration",
+            "title_en": "Evaluate integration",
+            "criteria": [
+              {
+                "id": "01HY-5.1",
+                "fr": "Autoévaluation honnête de sa performance en stage",
+                "en": "Honest self-assessment of internship performance"
+              },
+              {
+                "id": "01HY-5.2",
+                "fr": "Identification pertinente des axes d'amélioration",
+                "en": "Relevant identification of areas for improvement"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "410-BU7-AS"
+  },
+  "410.D0": {
+    "label_fr": "Gestion de commerces (DEC)",
+    "outcomes": [
+      "Gestion des opérations commerciales et des ventes",
+      "Marketing et développement de la clientèle",
+      "Gestion des ressources humaines dans un contexte commercial",
+      "Analyse financière et gestion budgétaire",
+      "Gestion des stocks et approvisionnement",
+      "Service à la clientèle et développement des affaires"
+    ],
+    "_note": "Outcomes inferred from program name and LCA.70 alignment",
+    "competencies": [
+      {
+        "code": "01UG",
+        "title_fr": "Assurer son intégration au marché de travail",
+        "title_en": "Participate in integration into the job market",
+        "elements": [
+          {
+            "id": "01UG-1",
+            "title_fr": "S'intégrer en milieu de travail",
+            "title_en": "Integrate into the workplace",
+            "criteria": [
+              {
+                "id": "01UG-1.1",
+                "fr": "Respect des politiques, règlements et procédures de l'entreprise",
+                "en": "Compliance with company policies, rules and procedures"
+              },
+              {
+                "id": "01UG-1.2",
+                "fr": "Adaptation rapide à la culture organisationnelle",
+                "en": "Rapid adaptation to the organizational culture"
+              },
+              {
+                "id": "01UG-1.3",
+                "fr": "Établissement de relations professionnelles constructives",
+                "en": "Establishment of constructive professional relationships"
+              }
+            ]
+          },
+          {
+            "id": "01UG-2",
+            "title_fr": "Exercer les activités liées au poste",
+            "title_en": "Carry out position-related activities",
+            "criteria": [
+              {
+                "id": "01UG-2.1",
+                "fr": "Exécution adéquate des tâches confiées selon les standards de qualité attendus",
+                "en": "Adequate completion of assigned tasks according to expected quality standards"
+              },
+              {
+                "id": "01UG-2.2",
+                "fr": "Gestion efficace des priorités et du temps de travail",
+                "en": "Effective management of priorities and working time"
+              },
+              {
+                "id": "01UG-2.3",
+                "fr": "Résolution autonome des problèmes courants liés au poste",
+                "en": "Autonomous resolution of common position-related problems"
+              },
+              {
+                "id": "01UG-2.4",
+                "fr": "Prise d'initiative appropriée dans l'exercice des fonctions",
+                "en": "Appropriate initiative in carrying out duties"
+              }
+            ]
+          },
+          {
+            "id": "01UG-3",
+            "title_fr": "Analyser son expérience de travail",
+            "title_en": "Analyze the work experience",
+            "criteria": [
+              {
+                "id": "01UG-3.1",
+                "fr": "Identification des compétences développées et des lacunes à combler",
+                "en": "Identification of developed competencies and gaps to address"
+              },
+              {
+                "id": "01UG-3.2",
+                "fr": "Évaluation honnête de sa contribution à l'organisation",
+                "en": "Honest assessment of contribution to the organization"
+              },
+              {
+                "id": "01UG-3.3",
+                "fr": "Formulation d'objectifs de développement professionnel pertinents",
+                "en": "Formulation of relevant professional development objectives"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "410-DZ4-AS"
+  },
+  "LCA.70": {
+    "label_fr": "Gestion de commerces (AEC)",
+    "outcomes": [
+      "Gestion des opérations commerciales",
+      "Développement des ventes et marketing",
+      "Gestion des responsabilités d'affaires et opérations commerciales",
+      "Commerce électronique et stratégie numérique",
+      "Gestion budgétaire et analyse financière de base"
+    ],
+    "competencies": [
+      {
+        "code": "01UG",
+        "title_fr": "Assurer son intégration au marché de travail",
+        "title_en": "Participate in integration into the job market",
+        "elements": [
+          {
+            "id": "01UG-1",
+            "title_fr": "S'intégrer en milieu de travail",
+            "title_en": "Integrate into the workplace",
+            "criteria": [
+              {
+                "id": "01UG-1.1",
+                "fr": "Respect des politiques, règlements et procédures de l'entreprise",
+                "en": "Compliance with company policies, rules and procedures"
+              },
+              {
+                "id": "01UG-1.2",
+                "fr": "Adaptation rapide à la culture organisationnelle",
+                "en": "Rapid adaptation to the organizational culture"
+              },
+              {
+                "id": "01UG-1.3",
+                "fr": "Établissement de relations professionnelles constructives",
+                "en": "Establishment of constructive professional relationships"
+              }
+            ]
+          },
+          {
+            "id": "01UG-2",
+            "title_fr": "Exercer les activités liées au poste",
+            "title_en": "Carry out position-related activities",
+            "criteria": [
+              {
+                "id": "01UG-2.1",
+                "fr": "Exécution adéquate des tâches confiées selon les standards de qualité attendus",
+                "en": "Adequate completion of assigned tasks according to expected quality standards"
+              },
+              {
+                "id": "01UG-2.2",
+                "fr": "Gestion efficace des priorités et du temps de travail",
+                "en": "Effective management of priorities and working time"
+              },
+              {
+                "id": "01UG-2.3",
+                "fr": "Résolution autonome des problèmes courants liés au poste",
+                "en": "Autonomous resolution of common position-related problems"
+              },
+              {
+                "id": "01UG-2.4",
+                "fr": "Prise d'initiative appropriée dans l'exercice des fonctions",
+                "en": "Appropriate initiative in carrying out duties"
+              }
+            ]
+          },
+          {
+            "id": "01UG-3",
+            "title_fr": "Analyser son expérience de travail",
+            "title_en": "Analyze the work experience",
+            "criteria": [
+              {
+                "id": "01UG-3.1",
+                "fr": "Identification des compétences développées et des lacunes à combler",
+                "en": "Identification of developed competencies and gaps to address"
+              },
+              {
+                "id": "01UG-3.2",
+                "fr": "Évaluation honnête de sa contribution à l'organisation",
+                "en": "Honest assessment of contribution to the organization"
+              },
+              {
+                "id": "01UG-3.3",
+                "fr": "Formulation d'objectifs de développement professionnel pertinents",
+                "en": "Formulation of relevant professional development objectives"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "410-DZ4-AS"
+  },
+  "410.X0": {
+    "label_fr": "Gestion de commerces – Gestion des industries créatives (DEC)",
+    "outcomes": [
+      "Gestion de projets créatifs et alignement des objectifs commerciaux avec les objectifs artistiques",
+      "Stratégies marketing propres aux industries créatives : promotion et développement de marque",
+      "Analyse des budgets, optimisation des ressources dans des contextes créatifs",
+      "Direction d'équipes créatives pluridisciplinaires",
+      "Connaissance des secteurs créatifs : design, jeux vidéo, multimédia, mode, médias, publicité",
+      "Production et valorisation de contenus créatifs"
+    ]
+  },
+  "430.A0": {
+    "label_fr": "Techniques de gestion hôtelière (DEC)",
+    "outcomes": [
+      "Gestion des opérations hôtelières et des normes de service",
+      "Leadership et gestion d'équipes dans l'industrie de l'hospitalité",
+      "Gestion des revenus hôteliers, analyse financière et budgétisation",
+      "Connaissance des tendances locales et mondiales de l'hospitalité",
+      "Expérience pratique par des stages rémunérés",
+      "Gestion de la relation client et standards d'hospitalité de premier ordre"
+    ],
+    "competencies": [
+      {
+        "code": "047Y",
+        "title_fr": "Assurer l'interface entre les activités des départements",
+        "title_en": "Act as an interface between departments",
+        "elements": [
+          {
+            "id": "047Y-1",
+            "title_fr": "Participer à des réunions de gestion",
+            "title_en": "Participate in management meetings",
+            "criteria": [
+              {
+                "id": "047Y-1.1",
+                "fr": "Préparation appropriée en fonction de l'ordre du jour",
+                "en": "Appropriate preparation based on the agenda"
+              },
+              {
+                "id": "047Y-1.2",
+                "fr": "Participation active aux discussions",
+                "en": "Active participation in discussions"
+              },
+              {
+                "id": "047Y-1.3",
+                "fr": "Prise de notes rigoureuse",
+                "en": "Rigorous note-taking"
+              },
+              {
+                "id": "047Y-1.4",
+                "fr": "Suivi approprié des décisions prises",
+                "en": "Appropriate follow-up on decisions made"
+              }
+            ]
+          },
+          {
+            "id": "047Y-2",
+            "title_fr": "Coordonner les activités interdépartementales",
+            "title_en": "Coordinate interdepartmental activities",
+            "criteria": [
+              {
+                "id": "047Y-2.1",
+                "fr": "Communication claire des besoins entre les départements",
+                "en": "Clear communication of needs between departments"
+              },
+              {
+                "id": "047Y-2.2",
+                "fr": "Résolution efficace des conflits opérationnels",
+                "en": "Effective resolution of operational conflicts"
+              },
+              {
+                "id": "047Y-2.3",
+                "fr": "Respect des procédures établies",
+                "en": "Compliance with established procedures"
+              }
+            ]
+          },
+          {
+            "id": "047Y-3",
+            "title_fr": "Assurer le suivi des opérations",
+            "title_en": "Follow up on operations",
+            "criteria": [
+              {
+                "id": "047Y-3.1",
+                "fr": "Vérification régulière de l'avancement des opérations",
+                "en": "Regular verification of operations progress"
+              },
+              {
+                "id": "047Y-3.2",
+                "fr": "Identification rapide des écarts par rapport aux standards",
+                "en": "Quick identification of deviations from standards"
+              },
+              {
+                "id": "047Y-3.3",
+                "fr": "Mise en place de mesures correctives appropriées",
+                "en": "Implementation of appropriate corrective measures"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "048P",
+        "title_fr": "Gérer les opérations d'un département",
+        "title_en": "Manage departmental operations",
+        "elements": [
+          {
+            "id": "048P-1",
+            "title_fr": "Planifier les opérations du département",
+            "title_en": "Plan departmental operations",
+            "criteria": [
+              {
+                "id": "048P-1.1",
+                "fr": "Planification adéquate des ressources humaines et matérielles",
+                "en": "Adequate planning of human and material resources"
+              },
+              {
+                "id": "048P-1.2",
+                "fr": "Respect des contraintes budgétaires",
+                "en": "Compliance with budget constraints"
+              },
+              {
+                "id": "048P-1.3",
+                "fr": "Établissement d'un calendrier opérationnel réaliste",
+                "en": "Establishment of a realistic operational schedule"
+              }
+            ]
+          },
+          {
+            "id": "048P-2",
+            "title_fr": "Superviser le personnel",
+            "title_en": "Supervise staff",
+            "criteria": [
+              {
+                "id": "048P-2.1",
+                "fr": "Attribution claire des tâches au personnel",
+                "en": "Clear assignment of tasks to staff"
+              },
+              {
+                "id": "048P-2.2",
+                "fr": "Suivi régulier du rendement des employés",
+                "en": "Regular monitoring of employee performance"
+              },
+              {
+                "id": "048P-2.3",
+                "fr": "Rétroaction constructive et opportune",
+                "en": "Constructive and timely feedback"
+              }
+            ]
+          },
+          {
+            "id": "048P-3",
+            "title_fr": "Contrôler la qualité des services",
+            "title_en": "Control service quality",
+            "criteria": [
+              {
+                "id": "048P-3.1",
+                "fr": "Vérification systématique du respect des standards de qualité",
+                "en": "Systematic verification of quality standard compliance"
+              },
+              {
+                "id": "048P-3.2",
+                "fr": "Traitement professionnel des plaintes clients",
+                "en": "Professional handling of customer complaints"
+              },
+              {
+                "id": "048P-3.3",
+                "fr": "Mise en œuvre de mesures d'amélioration continue",
+                "en": "Implementation of continuous improvement measures"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "430-HRS-AS"
+  },
+  "LJA.17": {
+    "label_fr": "Techniques de gestion hôtelière (AEC)",
+    "outcomes": [
+      "Gestion des opérations hôtelières et standards de service",
+      "Leadership et motivation des équipes hôtelières",
+      "Gestion des revenus, analyse financière et budgétisation",
+      "Connaissance des contextes local et mondial de l'hospitalité",
+      "Compétences pratiques acquises par stages rémunérés",
+      "Gestion de la relation client et développement de l'expérience client"
+    ],
+    "competencies": [
+      {
+        "code": "047Y",
+        "title_fr": "Assurer l'interface entre les activités des départements",
+        "title_en": "Act as an interface between departments",
+        "elements": [
+          {
+            "id": "047Y-1",
+            "title_fr": "Participer à des réunions de gestion",
+            "title_en": "Participate in management meetings",
+            "criteria": [
+              {
+                "id": "047Y-1.1",
+                "fr": "Préparation appropriée en fonction de l'ordre du jour",
+                "en": "Appropriate preparation based on the agenda"
+              },
+              {
+                "id": "047Y-1.2",
+                "fr": "Participation active aux discussions",
+                "en": "Active participation in discussions"
+              },
+              {
+                "id": "047Y-1.3",
+                "fr": "Prise de notes rigoureuse",
+                "en": "Rigorous note-taking"
+              },
+              {
+                "id": "047Y-1.4",
+                "fr": "Suivi approprié des décisions prises",
+                "en": "Appropriate follow-up on decisions made"
+              }
+            ]
+          },
+          {
+            "id": "047Y-2",
+            "title_fr": "Coordonner les activités interdépartementales",
+            "title_en": "Coordinate interdepartmental activities",
+            "criteria": [
+              {
+                "id": "047Y-2.1",
+                "fr": "Communication claire des besoins entre les départements",
+                "en": "Clear communication of needs between departments"
+              },
+              {
+                "id": "047Y-2.2",
+                "fr": "Résolution efficace des conflits opérationnels",
+                "en": "Effective resolution of operational conflicts"
+              },
+              {
+                "id": "047Y-2.3",
+                "fr": "Respect des procédures établies",
+                "en": "Compliance with established procedures"
+              }
+            ]
+          },
+          {
+            "id": "047Y-3",
+            "title_fr": "Assurer le suivi des opérations",
+            "title_en": "Follow up on operations",
+            "criteria": [
+              {
+                "id": "047Y-3.1",
+                "fr": "Vérification régulière de l'avancement des opérations",
+                "en": "Regular verification of operations progress"
+              },
+              {
+                "id": "047Y-3.2",
+                "fr": "Identification rapide des écarts par rapport aux standards",
+                "en": "Quick identification of deviations from standards"
+              },
+              {
+                "id": "047Y-3.3",
+                "fr": "Mise en place de mesures correctives appropriées",
+                "en": "Implementation of appropriate corrective measures"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "048P",
+        "title_fr": "Gérer les opérations d'un département",
+        "title_en": "Manage departmental operations",
+        "elements": [
+          {
+            "id": "048P-1",
+            "title_fr": "Planifier les opérations du département",
+            "title_en": "Plan departmental operations",
+            "criteria": [
+              {
+                "id": "048P-1.1",
+                "fr": "Planification adéquate des ressources humaines et matérielles",
+                "en": "Adequate planning of human and material resources"
+              },
+              {
+                "id": "048P-1.2",
+                "fr": "Respect des contraintes budgétaires",
+                "en": "Compliance with budget constraints"
+              },
+              {
+                "id": "048P-1.3",
+                "fr": "Établissement d'un calendrier opérationnel réaliste",
+                "en": "Establishment of a realistic operational schedule"
+              }
+            ]
+          },
+          {
+            "id": "048P-2",
+            "title_fr": "Superviser le personnel",
+            "title_en": "Supervise staff",
+            "criteria": [
+              {
+                "id": "048P-2.1",
+                "fr": "Attribution claire des tâches au personnel",
+                "en": "Clear assignment of tasks to staff"
+              },
+              {
+                "id": "048P-2.2",
+                "fr": "Suivi régulier du rendement des employés",
+                "en": "Regular monitoring of employee performance"
+              },
+              {
+                "id": "048P-2.3",
+                "fr": "Rétroaction constructive et opportune",
+                "en": "Constructive and timely feedback"
+              }
+            ]
+          },
+          {
+            "id": "048P-3",
+            "title_fr": "Contrôler la qualité des services",
+            "title_en": "Control service quality",
+            "criteria": [
+              {
+                "id": "048P-3.1",
+                "fr": "Vérification systématique du respect des standards de qualité",
+                "en": "Systematic verification of quality standard compliance"
+              },
+              {
+                "id": "048P-3.2",
+                "fr": "Traitement professionnel des plaintes clients",
+                "en": "Professional handling of customer complaints"
+              },
+              {
+                "id": "048P-3.3",
+                "fr": "Mise en œuvre de mesures d'amélioration continue",
+                "en": "Implementation of continuous improvement measures"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "430-HRS-AS"
+  },
+  "NWY.1X": {
+    "label_fr": "Stratégie sur les réseaux sociaux (AEC)",
+    "outcomes": [
+      "Développement et mise en œuvre de stratégies sur les réseaux sociaux",
+      "Création et gestion de contenu pour les plateformes numériques",
+      "Analyse des métriques et mesure de la performance des campagnes",
+      "Gestion de communautés en ligne",
+      "Marketing d'influence et partenariats numériques",
+      "Veille et gestion de la réputation en ligne"
+    ],
+    "_note": "Outcomes inferred from program name — no dedicated page found on site. Update when ministry competencies are provided.",
+    "competencies": [
+      {
+        "code": "KR41",
+        "title_fr": "Concevoir et publier du contenu",
+        "title_en": "Design and publish content",
+        "elements": [
+          {
+            "id": "KR41-1",
+            "title_fr": "Effectuer une veille des médias numériques",
+            "title_en": "Monitor digital media",
+            "criteria": [
+              {
+                "id": "KR41-1.1",
+                "fr": "Identification pertinente des plateformes et tendances émergentes",
+                "en": "Relevant identification of emerging platforms and trends"
+              },
+              {
+                "id": "KR41-1.2",
+                "fr": "Analyse rigoureuse des données d'audience",
+                "en": "Rigorous analysis of audience data"
+              }
+            ]
+          },
+          {
+            "id": "KR41-2",
+            "title_fr": "Produire des rapports d'analyse",
+            "title_en": "Produce analysis reports",
+            "criteria": [
+              {
+                "id": "KR41-2.1",
+                "fr": "Présentation claire et structurée des résultats",
+                "en": "Clear and structured presentation of results"
+              },
+              {
+                "id": "KR41-2.2",
+                "fr": "Formulation de recommandations stratégiques pertinentes",
+                "en": "Formulation of relevant strategic recommendations"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "KR46",
+        "title_fr": "Gérer un projet en communication Web",
+        "title_en": "Manage a Web communication project",
+        "elements": [
+          {
+            "id": "KR46-1",
+            "title_fr": "Définir la stratégie de contenu",
+            "title_en": "Define the content strategy",
+            "criteria": [
+              {
+                "id": "KR46-1.1",
+                "fr": "Définition précise des objectifs de communication",
+                "en": "Precise definition of communication objectives"
+              },
+              {
+                "id": "KR46-1.2",
+                "fr": "Identification juste des publics cibles et de leurs besoins",
+                "en": "Accurate identification of target audiences and their needs"
+              }
+            ]
+          },
+          {
+            "id": "KR46-3",
+            "title_fr": "Évaluer les résultats de la stratégie",
+            "title_en": "Evaluate strategy results",
+            "criteria": [
+              {
+                "id": "KR46-3.1",
+                "fr": "Mesure rigoureuse de la performance du contenu",
+                "en": "Rigorous measurement of content performance"
+              },
+              {
+                "id": "KR46-3.2",
+                "fr": "Ajustements appropriés basés sur les données",
+                "en": "Appropriate data-driven adjustments"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "KR49",
+        "title_fr": "Analyser les indicateurs de performance",
+        "title_en": "Analyze performance indicators",
+        "elements": [
+          {
+            "id": "KR49-2",
+            "title_fr": "Créer du contenu multimédia",
+            "title_en": "Create multimedia content",
+            "criteria": [
+              {
+                "id": "KR49-2.1",
+                "fr": "Qualité technique satisfaisante des productions",
+                "en": "Satisfactory technical quality of productions"
+              },
+              {
+                "id": "KR49-2.2",
+                "fr": "Cohérence avec l'identité visuelle de la marque",
+                "en": "Consistency with brand visual identity"
+              }
+            ]
+          },
+          {
+            "id": "KR49-3",
+            "title_fr": "Optimiser le contenu pour les plateformes",
+            "title_en": "Optimize content for platforms",
+            "criteria": [
+              {
+                "id": "KR49-3.1",
+                "fr": "Adaptation correcte des formats selon la plateforme",
+                "en": "Correct format adaptation by platform"
+              },
+              {
+                "id": "KR49-3.2",
+                "fr": "Application des meilleures pratiques SEO et de référencement",
+                "en": "Application of SEO and referencing best practices"
+              }
+            ]
+          },
+          {
+            "id": "KR49-6",
+            "title_fr": "Évaluer la performance du contenu",
+            "title_en": "Evaluate content performance",
+            "criteria": [
+              {
+                "id": "KR49-6.1",
+                "fr": "Suivi régulier des indicateurs de performance clés",
+                "en": "Regular monitoring of key performance indicators"
+              },
+              {
+                "id": "KR49-6.2",
+                "fr": "Utilisation des données pour optimiser les stratégies futures",
+                "en": "Use of data to optimize future strategies"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "code": "KR48",
+        "title_fr": "Entretenir des liens avec la communauté",
+        "title_en": "Maintain community relationships",
+        "elements": [
+          {
+            "id": "KR48-1",
+            "title_fr": "Animer la communauté",
+            "title_en": "Engage the community",
+            "criteria": [
+              {
+                "id": "KR48-1.1",
+                "fr": "Création de contenu engageant et adapté à la communauté",
+                "en": "Creation of engaging content adapted to the community"
+              },
+              {
+                "id": "KR48-1.2",
+                "fr": "Interaction professionnelle et bienveillante avec les membres",
+                "en": "Professional and supportive interaction with members"
+              }
+            ]
+          },
+          {
+            "id": "KR48-2",
+            "title_fr": "Gérer les situations difficiles",
+            "title_en": "Manage difficult situations",
+            "criteria": [
+              {
+                "id": "KR48-2.1",
+                "fr": "Gestion calme et professionnelle des commentaires négatifs",
+                "en": "Calm and professional handling of negative comments"
+              },
+              {
+                "id": "KR48-2.2",
+                "fr": "Application des politiques de modération de façon cohérente",
+                "en": "Consistent application of moderation policies"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "internship_course": "589-N19-AS"
+  }
+}

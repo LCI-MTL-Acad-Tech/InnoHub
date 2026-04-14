@@ -6,6 +6,11 @@ import argparse
 import sys
 from pathlib import Path
 
+import warnings, os
+warnings.filterwarnings("ignore")
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -138,6 +143,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_explain.add_argument("--top-n",        metavar="N", type=int, default=10,
                            help="Number of shared terms to show. Default: 10.")
 
+    # ── suggest-teams ─────────────────────────────────────────────────────────
+    p_suggest = sub.add_parser(
+        "suggest-teams",
+        help="Analyse student supply vs project capacity and suggest replica counts."
+    )
+    p_suggest.add_argument("--semester", metavar="TAG", required=True,
+                           help="Semester to analyse (e.g. 'Winter 2026').")
+    p_suggest.add_argument("--dry-run",  action="store_true",
+                           help="Show suggestions without writing to project files.")
+
     # ── reset ─────────────────────────────────────────────────────────────────
     p_reset = sub.add_parser("reset", help="Wipe data and start fresh (asks for confirmation).")
     p_reset.add_argument("--hard", action="store_true",
@@ -233,7 +248,7 @@ def main():
     elif cmd == "complete":          from src.lifecycle     import run_complete;  run_complete(args)
     elif cmd == "reassign":          from src.lifecycle     import run_reassign;  run_reassign(args)
     elif cmd == "explain":           from src.match         import run_explain;   run_explain(args)
-    elif cmd == "reset":             from src.bootstrap      import run_reset;     run_reset(args)
+    elif cmd == "suggest-teams":     from src.suggest_teams import run;           run(args)
     elif cmd == "dashboard":         from src.dashboard_cli  import run;           run(args)
     elif cmd == "web":               from src.dashboard_web import run;           run(args)
     else:

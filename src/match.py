@@ -487,7 +487,7 @@ def run_list(args) -> None:
     if what == "students":
         table = Table(box=box.SIMPLE_HEAD, show_header=True, header_style="bold",
                       title="Students", title_style="bold", title_justify="left")
-        table.add_column("ID",       style="cyan mono", width=10)
+        table.add_column("ID",       style="cyan", width=10)
         table.add_column("Name",     style="white",     min_width=22)
         table.add_column("Program",  style="cyan",      width=8)
         table.add_column("Semester", style="dim",       width=10)
@@ -542,7 +542,7 @@ def run_list(args) -> None:
         from src.store import project_fill as _pf
         table = Table(box=box.SIMPLE_HEAD, show_header=True, header_style="bold",
                       title="Projects", title_style="bold", title_justify="left")
-        table.add_column("ID",       style="dim mono",  min_width=24)
+        table.add_column("ID",       style="dim",  min_width=24)
         table.add_column("Title",    style="white",     min_width=26)
         table.add_column("Company",  style="dim",       min_width=16)
         table.add_column("Semester", style="cyan",      width=10)
@@ -583,7 +583,7 @@ def run_list(args) -> None:
     elif what == "coordinators":
         table = Table(box=box.SIMPLE_HEAD, show_header=True, header_style="bold",
                       title="Coordinators", title_style="bold", title_justify="left")
-        table.add_column("Email",    style="cyan mono", min_width=28)
+        table.add_column("Email",    style="cyan", min_width=28)
         table.add_column("Name",     style="white",     min_width=22)
         table.add_column("Programs", style="dim",       min_width=16)
         table.add_column("CV",       style="dim",       width=5)
@@ -611,7 +611,7 @@ def run_list(args) -> None:
     elif what == "companies":
         table = Table(box=box.SIMPLE_HEAD, show_header=True, header_style="bold",
                       title="Companies", title_style="bold", title_justify="left")
-        table.add_column("ID",       style="dim mono",  min_width=16)
+        table.add_column("ID",       style="dim",  min_width=16)
         table.add_column("Name",     style="white",     min_width=20)
         table.add_column("Contact",  style="dim",       min_width=20)
         table.add_column("Lang",     style="cyan",      width=6)

@@ -14,8 +14,10 @@ embeddings  = "data/embeddings"
 students    = "data/students"
 companies   = "data/companies"
 projects    = "data/projects"
-assignments = "data/assignments.csv"
-programs    = "data/programs.csv"
+assignments        = "data/assignments.csv"
+programs           = "data/programs.csv"
+semester_programs  = "data/semester_programs.csv"
+program_outcomes   = "data/program_outcomes.json"
 coordinators = "data/coordinators"
 man         = "man"
 
@@ -24,8 +26,22 @@ man         = "man"
 name = "paraphrase-multilingual-mpnet-base-v2"
 
 [semesters]
-# Format: <year>-<H|A>   H = hiver (winter), A = automne (fall)
-format = "{year}-{term}"
+# Canonical term names in calendar order within a year.
+terms = ["Winter", "Summer", "Fall"]
+
+# Which term starts the academic year (must match a value in terms above).
+# Used by dashboards when grouping by academic year.
+# If this is the first term in the list, calendar and academic year are equivalent.
+academic_year_start = "Fall"
+
+# Synonyms per term — English, French, and Spanish included by default.
+# Add or remove entries to match your institution's terminology.
+[semesters.synonyms]
+Winter = ["winter", "spring", "hiver", "printemps", "invierno", "primavera",
+          "h", "w", "p", "i"]
+Summer = ["summer", "été", "ete", "verano", "s", "e", "v"]
+Fall   = ["fall", "autumn", "automne", "otoño", "otono",
+          "a", "f", "o"]
 
 [coordinator]
 # Default coordinator — assigned as de facto when no coordinator is set on a project.

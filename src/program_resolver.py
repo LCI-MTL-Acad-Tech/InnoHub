@@ -316,7 +316,50 @@ def resolve(
     return typed, "manual"
 
 
-def resolve_pending_interior(programs: list[dict], interactive: bool = True) -> str | None:
+def refine_it_stream(cv_text: str) -> str | None:
+    """
+    Given the raw text of a student CV, try to infer which IT DEC stream
+    they are in when their stored program code is 420.B0 (stream unknown).
+
+    Returns the refined code ("420.BP", "420.BR", or "420.BX") or None if
+    the text does not contain a clear enough signal — in which case the
+    caller should keep 420.B0.
+
+    The heuristic mirrors program_resolver.py's IT stream detection but is
+    applied to free-form CV text rather than a form field, so it must be
+    a little more conservative to avoid false positives.
+    """
+    t = _n(cv_text)
+
+    # Game programming — strongest signal (very domain-specific vocabulary)
+    if _contains(t, _IT_GAME_SIGNALS) or _contains(t, [
+        "game developer", "game engine", "unity", "unreal", "godot",
+        "jeux vidéo", "programmation de jeux", "game programming",
+    ]):
+        return "420.BX"
+
+    # Network / security — fairly specific vocabulary
+    if _contains(t, _IT_NET_SIGNALS) or _contains(t, [
+        "cybersecurity", "cybersécurité", "firewall", "cisco", "ccna",
+        "vpn", "wireshark", "sécurité réseau", "network security",
+        "gestion de réseaux", "administration réseau",
+    ]):
+        return "420.BR"
+
+    # Programming — only count strong markers, not just the word "programming"
+    # since every IT student has that word somewhere
+    if _contains(t, [
+        "profil programmation", "profile in programming",
+        "développement web", "web development",
+        "développement d'applications", "application development",
+        "développeur", "developer", "software engineer",
+        "python", "javascript", "typescript", "react", "angular", "vue",
+        "java ", "c#", "php", "laravel", "django", "spring",
+        ".net", "node.js", "mobile development", "développement mobile",
+    ]):
+        return "420.BP"
+
+    return None  # no clear signal — keep 420.B0
     opts = [p for p in programs if p["code"] in _INTERIOR_CODES
             and p.get("active", "true") == "true"]
     if not interactive or not opts:

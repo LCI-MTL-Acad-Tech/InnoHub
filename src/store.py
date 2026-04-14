@@ -39,6 +39,34 @@ def save_programs(rows: list[dict]) -> None:
         w.writeheader()
         w.writerows(rows)
 
+def load_semester_programs() -> list[dict]:
+    """Return all rows from semester_programs.csv."""
+    path = Path(PATHS.get("semester_programs", "data/semester_programs.csv"))
+    if not path.exists():
+        return []
+    with open(path, newline="") as f:
+        return list(csv.DictReader(f))
+
+def semester_program_info(semester: str, program_code: str) -> dict | None:
+    """
+    Look up internship info for a (semester, program_code) pair.
+    Falls back to 420.BP if program_code is 420.B0.
+    Returns dict with keys: course_code, hours, date_start, date_end — or None.
+    """
+    code = program_code
+    if code == "420.B0":
+        code = "420.BP"   # no student is actually in B0 — default to BP
+    rows = load_semester_programs()
+    for r in rows:
+        if r["semester"] == semester and r["program_code"] == code:
+            return {
+                "course_code": r["course_code"],
+                "hours":       int(r["hours"]),
+                "date_start":  r["date_start"],
+                "date_end":    r["date_end"],
+            }
+    return None
+
 def load_assignments() -> list[dict]:
     with open(PATHS["assignments"], newline="") as f:
         return list(csv.DictReader(f))
@@ -154,7 +182,56 @@ def project_fill(project_meta: dict, rows: list[dict]) -> dict:
     }
 
 
-def validate_semester(tag: str) -> bool:
+def load_program_outcomes() -> dict:
+    """Return the full program_outcomes.json dict."""
+    import json
+    path = Path(PATHS.get("program_outcomes", "data/program_outcomes.json"))
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text())
+
+
+def program_outcomes(code: str) -> list[str]:
+    """
+    Return the website learning outcome strings for a program code.
+    Falls back to 420.BP outcomes for 420.B0.
+    """
+    data = load_program_outcomes()
+    if code == "420.B0":
+        code = "420.BP"
+    return data.get(code, {}).get("outcomes", [])
+
+
+def program_competencies(code: str) -> list[dict]:
+    """
+    Return the ministry competency objects for a program code.
+    Falls back to 420.BP for 420.B0.
+    Each dict has: code, title_fr, title_en, elements (list of element dicts).
+    """
+    data = load_program_outcomes()
+    if code == "420.B0":
+        code = "420.BP"
+    return data.get(code, {}).get("competencies", [])
+
+
+def program_competency_text(code: str, lang: str = "fr") -> str:
+    """
+    Return all competency titles and element titles for a program as a
+    single concatenated string, suitable for embedding.
+    lang: "fr" or "en"
+    """
+    comps = program_competencies(code)
+    outs  = program_outcomes(code)
+    key   = f"title_{lang}"
+    crit_key = lang
+    parts = list(outs)
+    for c in comps:
+        parts.append(c.get(key, ""))
+        for el in c.get("elements", []):
+            parts.append(el.get(key, ""))
+            for cr in el.get("criteria", []):
+                parts.append(cr.get(crit_key, ""))
+    return "\n".join(p for p in parts if p)
     """Return True if tag can be parsed as a valid semester. See semester.py."""
     from src.semester import parse
     return parse(tag) is not None

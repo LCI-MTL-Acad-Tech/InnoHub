@@ -210,18 +210,45 @@ def _ingest_student(files: list[Path], args) -> None:
     if not email:
         email = input("  Email address not found in document. Enter manually: ").strip()
 
+    # ── Refine 420.B0 stream from CV text ─────────────────────────────────────
+    if program_code == "420.B0":
+        from src.program_resolver import refine_it_stream
+        refined = refine_it_stream(text)
+        if refined:
+            console.print(
+                f"  [blue]ℹ[/blue]  IT stream inferred from CV: "
+                f"[bold]{refined}[/bold] (was 420.B0)"
+            )
+            program_code = refined
+        else:
+            console.print(
+                "  [yellow]⚠[/yellow]  IT stream unclear from CV — stored as 420.B0"
+            )
+
     # ── Extract name ──────────────────────────────────────────────────────────
     name = input(f"  Student full name: ").strip()
 
-    # ── Hours available ───────────────────────────────────────────────────────
-    hours_str = input("  Hours available: ").strip()
-    try:
-        hours_available = int(hours_str)
-    except ValueError:
-        hours_available = 135
-        console.print(f"  Invalid input — defaulting to {hours_available}h.")
-
     semester = _prompt_semester(args)
+
+    # ── Hours available — look up from semester_programs table ────────────────
+    from src.store import semester_program_info
+    sp_info = semester_program_info(semester, program_code)
+    if sp_info:
+        hours_available = sp_info["hours"]
+        console.print(
+            f"  [dim]Hours: {hours_available}h "
+            f"({sp_info['date_start']} → {sp_info['date_end']})[/dim]"
+        )
+    else:
+        hours_str = input(
+            f"  No internship data for {program_code} / {semester}. "
+            f"Hours available: "
+        ).strip()
+        try:
+            hours_available = int(hours_str)
+        except ValueError:
+            hours_available = 135
+            console.print(f"  Invalid input — defaulting to {hours_available}h.")
 
     # ── Determine document type and save ─────────────────────────────────────
     doc_records = []

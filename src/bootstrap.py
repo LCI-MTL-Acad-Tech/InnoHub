@@ -126,6 +126,12 @@ def bootstrap(verbose: bool = False) -> None:
             csv.DictWriter(f, fieldnames=PROGRAMS_HEADER).writeheader()
         log("created  data/programs.csv")
 
+    # ── semester_programs.csv ─────────────────────────────────────────────────
+    sp = Path("data/semester_programs.csv")
+    if not sp.exists():
+        sp.write_text("semester,program_code,course_code,hours,date_start,date_end\n")
+        log("created  data/semester_programs.csv")
+
     # ── audit.log ─────────────────────────────────────────────────────────────
     audit = Path("data/audit.log")
     if not audit.exists():
@@ -187,7 +193,7 @@ def run_reset(args) -> None:
             removed += 1
 
     # CSV and log
-    for fname in ("data/assignments.csv", "data/audit.log"):
+    for fname in ("data/assignments.csv", "data/audit.log", "data/semester_programs.csv"):
         p = Path(fname)
         if p.exists():
             p.unlink()

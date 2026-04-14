@@ -1,17 +1,9 @@
-# venv
-bin/
-include/
-lib/
-lib64/
 pyvenv.cfg
 
-# ingested data
-raw/
-
 # Generated at runtime — never commit
-data/*.csv
 data/embeddings/
 data/documents/
+data/assignments.csv
 data/students/*.json
 data/companies/*.json
 data/projects/*.json
@@ -27,7 +19,7 @@ config.toml
 *.html
 
 # Output data — never commit
-data/*.csv
+*.csv
 data/audit.log
 
 # Python

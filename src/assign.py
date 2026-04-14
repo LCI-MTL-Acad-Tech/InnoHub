@@ -352,6 +352,8 @@ def run_assign(args) -> None:
         company_name       = company_meta.get("name", ""),
         semester           = semester,
         coordinator_emails = coordinator_emails,
+        linkedin_url       = student_meta.get("linkedin_url", ""),
+        portfolio_urls     = student_meta.get("portfolio_urls", []),
     )
     _print_email_draft(draft, console)
 
