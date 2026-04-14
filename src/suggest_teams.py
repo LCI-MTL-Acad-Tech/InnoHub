@@ -188,23 +188,44 @@ def run(args) -> None:
                 relevant_hours += s["hours"]
                 relevant_students.append(s["id"])
 
-        if relevant_hours == 0 or not relevant_students:
-            suggestion = 0
-            students_per_team = 0
-        else:
-            avg_hours = relevant_hours / len(relevant_students)
-            students_per_team = max(1, math.ceil(total_hours / avg_hours))
-            suggestion = min(MAX_TEAMS, max(1, math.floor(len(relevant_students) / students_per_team)))
-
         results.append({
             "meta":              pmeta,
-            "suggestion":        suggestion,
+            "suggestion":        0,          # set in global allocation pass below
             "relevant_hours":    relevant_hours,
             "n_relevant":        len(relevant_students),
-            "students_per_team": students_per_team,
+            "students_per_team": 0,          # set in global allocation pass below
             "total_hours":       total_hours,
             "current_teams":     int(pmeta.get("teams", 1)),
         })
+
+    # ── Global allocation ─────────────────────────────────────────────────────
+    # Max team size = sum over tasks of floor(task_hours / 40), min 1 per task.
+    # Example: 4 tasks × 90h each → floor(90/40)=2 per task → max 8 students/team.
+    # suggested_teams = floor(relevant_students / max_team_size).
+    total_students = len(students)
+    total_relevant = sum(r["n_relevant"] for r in results if r["n_relevant"] > 0)
+
+    for r in results:
+        if r["n_relevant"] == 0 or r["total_hours"] == 0:
+            r["suggestion"] = 0
+            r["students_per_team"] = 0
+            continue
+
+        tasks = r["meta"].get("capacity", {}).get("tasks", [])
+        if tasks:
+            max_team_size = sum(
+                max(1, math.floor(t.get("hours", 0) / 40))
+                for t in tasks
+            )
+        else:
+            # No task breakdown — fall back to floor(total_hours / 40), min 1
+            max_team_size = max(1, math.floor(r["total_hours"] / 40))
+
+        max_team_size = max(1, max_team_size)
+        r["students_per_team"] = max_team_size
+
+        suggestion = max(1, math.floor(r["n_relevant"] / max_team_size))
+        r["suggestion"] = suggestion
 
     # ── Display results table ─────────────────────────────────────────────────
     results.sort(key=lambda r: (r["suggestion"] == 0, -r["relevant_hours"]))
@@ -235,6 +256,14 @@ def run(args) -> None:
         table.add_row(str(i), title, cap, relevant, per_team, current, suggested)
 
     console.print(table)
+
+    total_teams    = sum(r["suggestion"] for r in results)
+    total_slots    = sum(r["suggestion"] * r["students_per_team"] for r in results)
+    console.print(
+        f"  [dim]Total: {total_teams} team(s) across {len(results)} project(s)"
+        f" — absorbs ~{total_slots} student slot(s)"
+        f" out of {total_students} available.[/dim]\n"
+    )
 
     if dry_run:
         console.print("  [dim]Dry run — no changes written.[/dim]\n")
