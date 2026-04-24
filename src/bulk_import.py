@@ -37,6 +37,8 @@ _COL_LINKEDIN = "URL de votre profil LinkedIn / Your LinkedIn profile URL"
 _COL_PORTFOLIO= "URL(s) de portfolio(s) / Your portfolio URL(s)"
 
 # MS Forms column names — projects
+# These are the exact column headers from the MS Forms Excel export.
+# _get() also does prefix matching so truncated column names still work.
 _PCOL_NAME    = "Votre nom / Your name"
 _PCOL_EMAIL   = "Adresse e-mail / Contact email"
 _PCOL_CLIENT  = "Description du client / Client description"
@@ -77,6 +79,7 @@ def run(args) -> None:
     # ── Students ──────────────────────────────────────────────────────────────
     students_file = _find_tabular(raw_dir, "students")
     if students_file:
+        console.print(f"  [dim]Students file: {students_file.name}[/dim]")
         _import_students(students_file, raw_dir, semester_str, default_h,
                          dry_run, console)
     else:
@@ -85,6 +88,7 @@ def run(args) -> None:
     # ── Projects ──────────────────────────────────────────────────────────────
     projects_file = _find_tabular(raw_dir, "projects")
     if projects_file:
+        console.print(f"  [dim]Projects file: {projects_file.name}[/dim]")
         _import_projects(projects_file, raw_dir, semester_str, dry_run, console)
     else:
         console.print("  [dim]No projects.csv / projects.xlsx found — skipping projects.[/dim]")
@@ -116,10 +120,27 @@ def _import_students(
 
     rows = _read_tabular(csv_path)
     if not rows:
-        console.print("  [red]students file is empty or unreadable.[/red]")
+        # Try to give a useful error
+        try:
+            _read_tabular(csv_path)
+        except Exception as e:
+            console.print(f"  [red]students file error: {e}[/red]")
+            return
+        console.print(f"  [red]students file is empty or has no readable rows: {csv_path.name}[/red]")
         return
 
-    console.print(f"  [bold]Students[/bold]  ({len(rows)} rows in CSV)\n")
+    console.print(f"  [bold]Students[/bold]  ({len(rows)} rows)\n")
+
+    # Diagnostic: show actual column names if expected ones are missing
+    if rows:
+        first = rows[0]
+        missing = [c for c in [_COL_ID, _COL_EMAIL, _COL_PROGRAM, _COL_CV]
+                   if not _get(first, c) and _get(first, c) == ""]
+        if all(not _get(first, c) for c in [_COL_ID, _COL_EMAIL]):
+            console.print("  [yellow]⚠ Expected columns not found. Actual columns:[/yellow]")
+            for col in list(first.keys())[:8]:
+                console.print(f"    [dim]{repr(col)}[/dim]")
+            return
 
     results = []   # (student_number, name, program, confidence, status, notes)
 
@@ -326,7 +347,12 @@ def _import_projects(
     desc_dir = raw_dir / "Desc"
     rows = _read_tabular(csv_path)
     if not rows:
-        console.print("  [red]projects file is empty or unreadable.[/red]")
+        try:
+            _read_tabular(csv_path)
+        except Exception as e:
+            console.print(f"  [red]projects file error: {e}[/red]")
+            return
+        console.print(f"  [red]projects file is empty or has no readable rows: {csv_path.name}[/red]")
         return
 
     existing_projects = set(list_ids("projects"))
@@ -683,6 +709,50 @@ def _extract_tasks(raw: str) -> list[dict]:
         seen.add(key)
         tasks.append({"label": label, "hours": hours})
 
+    # ── 0. Tab-separated format ───────────────────────────────────────────────
+    # Format: <hours>h   <title> — <detail>   <tech, tech, ...>
+    # Blocks separated by blank lines. Fields separated by 3+ spaces or tabs.
+    # "same as above" in tech field inherits previous task's tech list.
+    # This format is detected first since it is the most explicit.
+    prev_tech: list[str] = []
+    blocks = re.split(r"\n{2,}", raw.strip())
+    tab_tasks = []
+    for block in blocks:
+        block = block.strip()
+        if not block:
+            continue
+        # Split on tab or 3+ consecutive spaces
+        parts = re.split(r"\t|   +", block, maxsplit=2)
+        if len(parts) < 2:
+            continue
+        hours_part = parts[0].strip()
+        if not re.match(r"^\d{1,3}h$", hours_part, re.IGNORECASE):
+            continue
+        hours = int(hours_part[:-1])
+        desc_part = parts[1].strip() if len(parts) > 1 else ""
+        tech_part = parts[2].strip() if len(parts) > 2 else ""
+        # Split description on em-dash to get title and detail
+        if "—" in desc_part:
+            title, detail = desc_part.split("—", 1)
+            label = title.strip()
+        else:
+            label = desc_part
+        # Resolve tech inheritance
+        if tech_part.strip().lower() == "same as above":
+            tech = prev_tech[:]
+        else:
+            tech = [t.strip() for t in tech_part.split(",") if t.strip()]
+            if tech:
+                prev_tech = tech[:]
+        tab_tasks.append({"label": label, "hours": hours,
+                          "description": "", "tech": tech})
+    if tab_tasks:
+        for i, t in enumerate(tab_tasks, 1):
+            t["task_id"] = f"t{i}"
+            if "description" not in t:
+                t["description"] = ""
+        return tab_tasks
+
     # ── 1. Line format ────────────────────────────────────────────────────────
     for line in raw.splitlines():
         m = _LINE_PAT.match(line.strip())
@@ -956,25 +1026,16 @@ def _read_tabular(path: Path) -> list[dict]:
 
     if suffix == ".xlsx":
         try:
-            import openpyxl
-            wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
-            ws = wb.active
-            rows = list(ws.iter_rows(values_only=True))
-            wb.close()
-            if not rows:
-                return []
-            headers = [str(h).strip() if h is not None else "" for h in rows[0]]
-            result = []
-            for row in rows[1:]:
-                if all(v is None for v in row):
-                    continue
-                result.append({
-                    headers[i]: (str(v).strip() if v is not None else "")
-                    for i, v in enumerate(row)
-                    if i < len(headers)
-                })
-            return result
+            import pandas as pd
+        except ImportError:
+            print("  ERROR: pandas not installed. Run: ./bin/pip install pandas")
+            return []
+        try:
+            df = pd.read_excel(path, dtype=str)
+            df = df.fillna("")
+            return df.to_dict(orient="records")
         except Exception as e:
+            print(f"  ERROR reading {path.name}: {e}")
             return []
 
     # CSV — try semicolon first (MS Forms default), then comma
@@ -991,30 +1052,66 @@ def _read_tabular(path: Path) -> list[dict]:
 
 
 def _find_tabular(folder: Path, stem: str) -> Path | None:
-    """Find students.csv, students.xlsx, projects.csv, or projects.xlsx."""
+    """
+    Find a tabular file for the given stem (students or projects).
+    Accepts exact name first, then falls back to any file whose name
+    starts with the stem — handles MS Forms exports like 'students(1).xlsx'
+    or exports with the full form title.
+    """
+    # Exact match first
     for ext in (".csv", ".xlsx"):
         p = folder / f"{stem}{ext}"
         if p.exists():
             return p
+    # Fuzzy: any file starting with the stem (case-insensitive)
+    for ext in (".xlsx", ".csv"):
+        matches = sorted(folder.glob(f"{stem}*{ext}"))
+        if matches:
+            return matches[0]
+    # Even fuzzier: stem appears anywhere in filename
+    for ext in (".xlsx", ".csv"):
+        matches = sorted(f for f in folder.glob(f"*{ext}")
+                         if stem.lower() in f.name.lower())
+        if matches:
+            return matches[0]
     return None
 
 
 def _get(row: dict, key: str) -> str:
     """
-    Case- and whitespace-tolerant dict lookup for MS Forms CSV headers.
-    Handles trailing spaces, non-breaking spaces, and apostrophe variants.
+    Case- and whitespace-tolerant dict lookup for MS Forms CSV/XLSX headers.
+    Handles trailing spaces, non-breaking spaces, apostrophe variants, and
+    columns that Excel has truncated mid-word.
+
+    Match priority:
+      1. Exact match (raw)
+      2. Exact match after normalisation
+      3. Prefix match — the stored key starts with the lookup key (or vice versa)
     """
+    import unicodedata
+
+    def _norm(s: str) -> str:
+        s = unicodedata.normalize("NFC", s)
+        return s.lower().strip().replace("\xa0", " ").replace("'", "'").replace("\u2019", "'")
+
     # Direct hit first
     v = row.get(key)
     if v is not None:
-        return v.strip()
-    # Normalise both key and all row keys
-    def _norm(s: str) -> str:
-        return s.lower().strip().replace("\xa0", " ").replace("'", "'").replace("'", "'")
+        return (v or "").strip()
+
     key_n = _norm(key)
+
+    # Exact normalised match
     for k, val in row.items():
         if _norm(k) == key_n:
             return (val or "").strip()
+
+    # Prefix match — handles Excel-truncated column names
+    for k, val in row.items():
+        k_n = _norm(k)
+        if k_n.startswith(key_n) or key_n.startswith(k_n):
+            return (val or "").strip()
+
     return ""
 
 
