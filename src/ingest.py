@@ -244,9 +244,9 @@ def _ingest_student(files: list[Path], args) -> None:
             f"  No internship data for {program_code} / {semester}. "
             f"Hours available: "
         ).strip()
-        try:
-            hours_available = int(hours_str)
-        except ValueError:
+        from src.bulk_import import _parse_hours as _ph
+        hours_available = _ph(hours_str)
+        if hours_available is None:
             hours_available = 135
             console.print(f"  Invalid input — defaulting to {hours_available}h.")
 
@@ -593,9 +593,9 @@ def _prompt_tasks(console) -> list[dict] | None:
                 continue
             break
         hours_str = input(f"  Task {i} hours: ").strip()
-        try:
-            hours = int(hours_str)
-        except ValueError:
+        from src.bulk_import import _parse_hours as _ph
+        hours = _ph(hours_str)
+        if hours is None:
             console.print("  Invalid hours — skipping task.")
             continue
         description = input(f"  Task {i} description (optional): ").strip()

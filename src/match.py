@@ -35,6 +35,7 @@ def _match_student(student_number: str, args) -> None:
     from src.store import load_json, list_ids, load_assignments, project_fill
     from src.embed import load_embedding, cosine_similarity
     from src.semester import parse as parse_sem
+    import types
 
     console = Console()
 
@@ -60,204 +61,190 @@ def _match_student(student_number: str, args) -> None:
         return
 
     s_vec = load_embedding(emb_path)
-    rows  = load_assignments()
 
-    # Hours already committed
-    hours_committed = sum(
-        int(r.get("hours_planned", 0)) for r in rows
-        if r["student_number"] == student_number
-        and r["status"] in {"proposed", "confirmed"}
-    )
-    hours_available = int(student_meta.get("hours_available", 0))
-    hours_remaining = hours_available - hours_committed
+    # ── Load state once into memory ───────────────────────────────────────────
+    rows             = load_assignments()
+    hours_available  = int(student_meta.get("hours_available", 0))
 
-    # Projects already assigned (active) — exclude from results
-    assigned_projects = {
-        r["project_id"] for r in rows
-        if r["student_number"] == student_number
-        and r["status"] in {"proposed", "confirmed"}
-    }
-
-    # Past assignments (completed/cancelled) — note at bottom
-    past_projects = {
-        r["project_id"] for r in rows
-        if r["student_number"] == student_number
-        and r["status"] in {"completed", "cancelled"}
-    }
-
-    # Semester filter
+    # Semester filter (constant across loop)
     sem_filter_str = None
     if getattr(args, "semester", None):
         sem_obj = parse_sem(args.semester)
         if sem_obj:
             sem_filter_str = sem_obj.to_storage()
 
-    # Rank all eligible projects
-    results = []
-    for pid in list_ids("projects"):
-        if pid in assigned_projects:
-            continue
-        try:
-            pmeta = load_json("projects", pid)
-        except Exception:
-            continue
+    # ── Assignment loop ───────────────────────────────────────────────────────
+    while True:
+        # Recompute from in-memory rows each iteration
+        hours_committed = sum(
+            int(r.get("hours_planned", 0)) for r in rows
+            if r["student_number"] == student_number
+            and r["status"] in {"proposed", "confirmed"}
+        )
+        hours_remaining = hours_available - hours_committed
 
-        if pmeta.get("status") != "active" and not getattr(args, "inactive", False):
-            continue
+        assigned_projects = {
+            r["project_id"] for r in rows
+            if r["student_number"] == student_number
+            and r["status"] in {"proposed", "confirmed"}
+        }
+        past_projects = {
+            r["project_id"] for r in rows
+            if r["student_number"] == student_number
+            and r["status"] in {"completed", "cancelled"}
+        }
 
-        if sem_filter_str and pmeta.get("semester") != sem_filter_str:
-            continue
+        if hours_remaining <= 0:
+            console.print(
+                f"  [dim]{student_meta['name']} has no hours remaining.[/dim]\n"
+            )
+            break
 
-        p_emb = pmeta.get("embedding_file", "")
-        if not p_emb or not Path(p_emb).exists():
-            continue
-
-        # Check company is active
-        try:
-            cmeta = load_json("companies", pmeta["company_id"])
-            if cmeta.get("status") != "active" and not getattr(args, "inactive", False):
+        # Rank eligible projects
+        results = []
+        for pid in list_ids("projects"):
+            if pid in assigned_projects:
                 continue
-            company_name = cmeta.get("name", pmeta["company_id"])
-        except Exception:
-            company_name = pmeta.get("company_id", "")
-
-        fill = project_fill(pmeta, rows)
-        if not fill["has_open_slot"] and not getattr(args, "inactive", False):
-            continue   # all teams full — skip unless --inactive
-
-        score = cosine_similarity(s_vec, load_embedding(p_emb))
-        results.append((score, pmeta, company_name, fill))
-
-    results.sort(key=lambda x: x[0], reverse=True)
-
-    n = getattr(args, "n", 5) if not getattr(args, "all", False) else len(results)
-    shown = results[:n]
-
-    if not shown:
-        console.print(
-            f"\n  No eligible projects found for {student_meta['name']}.\n"
-        )
-        return
-
-    console.print(
-        f"\n  [bold]{student_meta['name']}[/bold]"
-        f"  {student_meta['program']}  ·  {student_meta['semester_start']}"
-        f"  ·  [green]{hours_remaining}h available[/green]\n"
-    )
-
-    table = Table(box=box.SIMPLE_HEAD, show_header=True, header_style="bold")
-    table.add_column("Rank",     style="dim",   width=5,  justify="right")
-    table.add_column("Score",    style="green", width=6,  justify="right")
-    table.add_column("Project",  style="white", min_width=28)
-    table.add_column("Company",  style="dim",   min_width=16)
-    table.add_column("Fill",     style="cyan",  justify="right", width=14)
-    table.add_column("Status",   style="yellow", width=10)
-
-    for i, (score, pmeta, company, fill) in enumerate(shown, 1):
-        status_colour = "green" if pmeta["status"] == "active" else "dim"
-        n_teams = fill["n_teams"]
-        if n_teams > 1:
-            # Show per-team summary: "A:20/80h B:0/80h"
-            team_parts = []
-            for label, td in sorted(fill["teams"].items()):
-                col = "green" if td["remaining"] > 0 else "dim"
-                team_parts.append(f"[{col}]{label}:{td['filled']}/{fill['total_hours']}h[/{col}]")
-            fill_str = " ".join(team_parts)
-        else:
-            td = next(iter(fill["teams"].values()))
-            fill_str = f"{td['filled']}/{fill['total_hours']}h"
-        table.add_row(
-            str(i),
-            f"{score:.2f}",
-            pmeta["title"],
-            company,
-            fill_str,
-            f"[{status_colour}]{pmeta['status']}[/{status_colour}]",
-        )
-
-    console.print(table)
-
-    total_matches = len(results)
-    if total_matches > n:
-        console.print(
-            f"  [dim]Showing {n} of {total_matches} matches. "
-            f"Use --n {n*2} or --all to see more.[/dim]"
-        )
-
-    if past_projects:
-        names = []
-        for pid in list(past_projects)[:3]:
             try:
-                names.append(load_json("projects", pid)["title"])
+                pmeta = load_json("projects", pid)
             except Exception:
-                names.append(pid)
-        console.print(
-            f"  [dim]Past assignments (excluded): "
-            f"{', '.join(names)}"
-            f"{'…' if len(past_projects) > 3 else ''}[/dim]"
-        )
-
-    console.print()
-
-    # ── Interactive assignment offer ──────────────────────────────────────────
-    if not shown:
-        return
-
-    raw = input("  Assign to a project? Enter rank number, or press Enter to skip: ").strip()
-    if not raw:
-        return
-
-    try:
-        idx = int(raw) - 1
-        if idx < 0 or idx >= len(shown):
-            raise ValueError
-    except ValueError:
-        console.print("  Invalid selection.")
-        return
-
-    _, pmeta, _, _ = shown[idx]
-
-    # Determine semester — prefer project semester
-    import types
-    from src.semester import prompt as prompt_sem
-    sem_str = pmeta.get("semester", "")
-    if not sem_str:
-        sem_str = prompt_sem(types.SimpleNamespace(semester=None)).to_storage()
-
-    # Delegate to assign
-    from src.assign import run_assign
-    assign_args = types.SimpleNamespace(
-        student_number = student_number,
-        project_id     = pmeta["project_id"],
-        semester       = sem_str,
-    )
-    run_assign(assign_args)
-
-    # Loop if still has hours
-    updated_rows     = load_assignments()
-    new_committed    = sum(
-        int(r.get("hours_planned", 0)) for r in updated_rows
-        if r["student_number"] == student_number
-        and r["status"] in {"proposed", "confirmed"}
-    )
-    new_remaining = hours_available - new_committed
-    if new_remaining > 0:
-        console.print(
-            f"\n  [green]{student_meta['name']} still has {new_remaining}h available.[/green]"
-        )
-        raw2 = input("  Assign to another project? Enter rank number, or press Enter to skip: ").strip()
-        if raw2:
+                continue
+            if pmeta.get("status") != "active" and not getattr(args, "inactive", False):
+                continue
+            if sem_filter_str and pmeta.get("semester") != sem_filter_str:
+                continue
+            p_emb = pmeta.get("embedding_file", "")
+            if not p_emb or not Path(p_emb).exists():
+                continue
             try:
-                idx2 = int(raw2) - 1
-                _, pmeta2, _, _ = shown[idx2]
-                assign_args2 = types.SimpleNamespace(
-                    student_number = student_number,
-                    project_id     = pmeta2["project_id"],
-                    semester       = pmeta2.get("semester", sem_str),
+                cmeta = load_json("companies", pmeta["company_id"])
+                if cmeta.get("status") != "active" and not getattr(args, "inactive", False):
+                    continue
+                company_name = cmeta.get("name", pmeta["company_id"])
+            except Exception:
+                company_name = pmeta.get("company_id", "")
+            fill = project_fill(pmeta, rows)
+            if not fill["has_open_slot"] and not getattr(args, "inactive", False):
+                continue
+            score = cosine_similarity(s_vec, load_embedding(p_emb))
+            results.append((score, pmeta, company_name, fill))
+
+        results.sort(key=lambda x: x[0], reverse=True)
+        n    = getattr(args, "n", 5) if not getattr(args, "all", False) else len(results)
+        shown = results[:n]
+
+        if not shown:
+            console.print(f"\n  No eligible projects found for {student_meta['name']}.\n")
+            break
+
+        # Build per-project breakdown for the header
+        committed_by_project: dict[str, int] = {}
+        for r in rows:
+            if (r["student_number"] == student_number
+                    and r["status"] in {"proposed", "confirmed"}):
+                pid = r["project_id"]
+                committed_by_project[pid] = (
+                    committed_by_project.get(pid, 0)
+                    + int(r.get("hours_planned", 0))
                 )
-                run_assign(assign_args2)
-            except (ValueError, IndexError):
-                console.print("  Invalid selection.")
+
+        console.print(
+            f"\n  [bold]{student_meta['name']}[/bold]"
+            f"  {student_meta['program']}  ·  {student_meta['semester_start']}"
+            f"  ·  [green]{hours_remaining}h remaining[/green]"
+            f"  [dim]({hours_committed}h committed / {hours_available}h total)[/dim]\n"
+        )
+        if committed_by_project:
+            for pid, h in sorted(committed_by_project.items()):
+                try:
+                    ptitle = load_json("projects", pid).get("title", pid)[:40]
+                except Exception:
+                    ptitle = pid
+                console.print(f"  [dim]  · {ptitle}: {h}h[/dim]")
+            console.print()
+
+        table = Table(box=box.SIMPLE_HEAD, show_header=True, header_style="bold")
+        table.add_column("Rank",    style="dim",    width=5,  justify="right")
+        table.add_column("Score",   style="green",  width=6,  justify="right")
+        table.add_column("Project", style="white",  min_width=28)
+        table.add_column("Company", style="dim",    min_width=16)
+        table.add_column("Fill",    style="cyan",   justify="right", width=14)
+        table.add_column("Status",  style="yellow", width=10)
+
+        for i, (score, pmeta, company, fill) in enumerate(shown, 1):
+            status_colour = "green" if pmeta["status"] == "active" else "dim"
+            n_teams = fill["n_teams"]
+            if n_teams > 1:
+                team_parts = []
+                for label, td in sorted(fill["teams"].items()):
+                    col = "green" if td["remaining"] > 0 else "dim"
+                    team_parts.append(f"[{col}]{label}:{td['filled']}/{fill['total_hours']}h[/{col}]")
+                fill_str = " ".join(team_parts)
+            else:
+                td = next(iter(fill["teams"].values()))
+                fill_str = f"{td['filled']}/{fill['total_hours']}h"
+            table.add_row(
+                str(i), f"{score:.2f}", pmeta["title"], company,
+                fill_str,
+                f"[{status_colour}]{pmeta['status']}[/{status_colour}]",
+            )
+
+        console.print(table)
+
+        total_matches = len(results)
+        if total_matches > n:
+            console.print(
+                f"  [dim]Showing {n} of {total_matches} matches. "
+                f"Use --n {n*2} or --all to see more.[/dim]"
+            )
+
+        if past_projects:
+            names = []
+            for pid in list(past_projects)[:3]:
+                try:
+                    names.append(load_json("projects", pid)["title"])
+                except Exception:
+                    names.append(pid)
+            console.print(
+                f"  [dim]Past assignments (excluded): "
+                f"{', '.join(names)}"
+                f"{'…' if len(past_projects) > 3 else ''}[/dim]"
+            )
+
+        console.print()
+
+        raw = input(
+            "  Assign to a project? Enter rank number, or press Enter to finish: "
+        ).strip()
+        if not raw:
+            break
+
+        try:
+            idx = int(raw) - 1
+            if idx < 0 or idx >= len(shown):
+                raise ValueError
+        except ValueError:
+            console.print("  Invalid selection.")
+            continue
+
+        _, pmeta, _, _ = shown[idx]
+        sem_str = pmeta.get("semester", "")
+        if not sem_str:
+            from src.semester import prompt as prompt_sem
+            sem_str = prompt_sem(types.SimpleNamespace(semester=None)).to_storage()
+
+        # Run assignment — returns new rows to merge into memory
+        from src.assign import run_assign
+        assign_args = types.SimpleNamespace(
+            student_number = student_number,
+            project_id     = pmeta["project_id"],
+            semester       = sem_str,
+        )
+        run_assign(assign_args)
+
+        # Reload assignments from disk after writing — single source of truth
+        rows = load_assignments()
+
 
 
 def _match_student_search(args) -> None:
@@ -540,6 +527,41 @@ def run_list(args) -> None:
 
     elif what == "projects":
         from src.store import project_fill as _pf
+
+        # ── --no-tasks filter ─────────────────────────────────────────────────
+        if getattr(args, "no_tasks", False):
+            from pathlib import Path
+            from src.store import PATHS
+            flagged = []
+            for pid in sorted(list_ids("projects")):
+                try:
+                    m = load_json("projects", pid)
+                except Exception:
+                    continue
+                if sem_filter_str and m.get("semester") != sem_filter_str:
+                    continue
+                if not m.get("capacity", {}).get("tasks"):
+                    flagged.append((pid, m.get("title", pid),
+                                    m.get("semester", "")))
+            if not flagged:
+                console.print("  [green]All projects have tasks defined.[/green]\n")
+                return
+            console.print(
+                f"\n  [yellow]{len(flagged)} project(s) with no tasks:[/yellow]\n"
+            )
+            for pid, title, sem in flagged:
+                console.print(f"    [dim]{pid}[/dim]  {title}  [dim]{sem}[/dim]")
+            if getattr(args, "requeue", False):
+                console.print()
+                for pid, title, _ in flagged:
+                    path = Path(PATHS["projects"]) / f"{pid}.json"
+                    path.unlink(missing_ok=True)
+                    console.print(f"  [dim]deleted[/dim]  {pid}")
+                console.print(
+                    f"\n  [green]✓[/green]  {len(flagged)} project(s) requeued."
+                    f" Run [bold]import[/bold] to re-process.\n"
+                )
+            return
         table = Table(box=box.SIMPLE_HEAD, show_header=True, header_style="bold",
                       title="Projects", title_style="bold", title_justify="left")
         table.add_column("ID",       style="dim",  min_width=24)

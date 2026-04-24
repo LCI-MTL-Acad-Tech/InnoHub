@@ -165,10 +165,10 @@ def _disambiguate(codes: set[str], dec_code: str, aec_code: str,
         return dec_code, "fuzzy"
     if not interactive:
         return dec_code, "fuzzy"  # default to DEC when unclear
-    # Show the student's original input so the coordinator can judge
+    # Show the student's original input on one line so the coordinator can judge
     if raw.strip():
-        import pydoc
-        pydoc.pager(f"Student wrote:\n\n{raw.strip()}")
+        preview = raw.strip().replace("\n", " / ")[:120]
+        print(f"  Student wrote: {preview}")
     opts = [p for p in programs if p["code"] in codes]
     print(f"\n  DEC or AEC?")
     for i, p in enumerate(opts, 1):
@@ -286,8 +286,8 @@ def resolve(
         if _contains(t, ["design de la mode", "fashion design"]): return "571.A0", "fuzzy"
         if interactive:
             if raw.strip():
-                import pydoc
-                pydoc.pager(f"Student wrote:\n\n{raw.strip()}")
+                preview = raw.strip().replace("\n", " / ")[:120]
+                print(f"  Student wrote: {preview}")
             opts = [p for p in programs if p["code"] in _FASHION_CODES]
             print("\n  Fashion — which program?")
             for i, p in enumerate(opts, 1):

@@ -44,26 +44,36 @@ def _select_team(
     console: Console,
 ) -> str | None:
     """
-    For a single-team project, return "".
+    For a single-team project, auto-assign to team A (creating it implicitly).
     For a multi-team project, show current team fill and ask which team.
     Returns the chosen team label ("A", "B", …) or None to abort.
     """
-    if n_teams <= 1:
-        return ""
+    letters = [chr(ord("A") + i) for i in range(max(n_teams, 1))]
 
-    letters = [chr(ord("A") + i) for i in range(n_teams)]
-
-    # Count assigned students per team
-    team_counts: dict[str, int] = {L: 0 for L in letters}
+    # Count assigned students per team across all teams that exist in rows
+    existing_teams = sorted(set(
+        r.get("team", "A") for r in rows
+        if r["project_id"] == project_id
+        and r["status"] in {"proposed", "confirmed"}
+        and r.get("team", "")
+    ))
+    team_counts: dict[str, int] = {}
     for r in rows:
         if r["project_id"] == project_id and r["status"] in {"proposed", "confirmed"}:
-            t = r.get("team", "")
-            if t in team_counts:
-                team_counts[t] += 1
+            t = r.get("team", "A") or "A"
+            team_counts[t] = team_counts.get(t, 0) + 1
+
+    # Single team — auto-assign to A, no prompt needed
+    if n_teams <= 1 and not existing_teams:
+        return "A"
+
+    if n_teams <= 1 and existing_teams:
+        # Only team A exists — return it silently
+        return existing_teams[0]
 
     console.print(f"\n  [bold]{n_teams} competing teams[/bold]  — current members:")
     for L in letters:
-        console.print(f"    {L}  {team_counts[L]} student(s)")
+        console.print(f"    {L}  {team_counts.get(L, 0)} student(s)")
 
     raw = input(
         f"  Assign to which team? [{'/'.join(letters)}] "
@@ -75,7 +85,6 @@ def _select_team(
         return None
 
     if raw == "NEW":
-        # Open the next unused letter
         next_letter = chr(ord("A") + n_teams)
         console.print(f"  Opening team {next_letter}.")
         return next_letter
@@ -212,7 +221,7 @@ def run_assign(args) -> None:
     filled: dict[str, int] = {}
     for r in rows:
         if (r["project_id"] == project_id
-                and r.get("team", "") == team
+                and (r.get("team", "A") or "A") == (team or "A")
                 and r["status"] in {"proposed", "confirmed"}):
             tid = r["task_id"]
             filled[tid] = filled.get(tid, 0) + int(r.get("hours_planned", 0))
@@ -221,8 +230,12 @@ def run_assign(args) -> None:
 
     # ── Task selection ────────────────────────────────────────────────────────
     raw = input(
-        '  Assign to which tasks? (comma-separated numbers, or "all"): '
+        '  Assign to which tasks? (comma-separated numbers, "all", or "q" to cancel): '
     ).strip().lower()
+
+    if raw in ("q", "quit", "cancel", ""):
+        console.print("  Cancelled — returning to match list.")
+        return
 
     if raw == "all":
         selected_indices = list(range(len(tasks)))
@@ -243,10 +256,14 @@ def run_assign(args) -> None:
 
     # ── Hour fine-tuning ──────────────────────────────────────────────────────
     task_assignments: list[tuple[dict, int]] = []  # (task, hours)
+    hours_left = hours_remaining   # decrements as tasks are committed in this session
     for idx in selected_indices:
         task = tasks[idx]
         remaining_on_task = task["hours"] - filled.get(task["task_id"], 0)
-        default_hours     = min(remaining_on_task, hours_remaining)
+        default_hours     = min(remaining_on_task, hours_left)
+        console.print(
+            f"  [dim]{hours_left}h still available[/dim]"
+        )
         raw_hours = input(
             f"  Hours for '{task['label']}' [{default_hours}]: "
         ).strip()
@@ -254,7 +271,30 @@ def run_assign(args) -> None:
             hours = int(raw_hours) if raw_hours else default_hours
         except ValueError:
             hours = default_hours
+
+        # ── Task capacity overflow — offer new team ───────────────────────────
+        if hours > remaining_on_task and remaining_on_task >= 0:
+            console.print(
+                f"\n  [yellow]Task '{task['label']}' only has {remaining_on_task}h "
+                f"remaining on team {team} — {hours}h would exceed capacity.[/yellow]"
+            )
+            answer = input(
+                "  Start a new competing team for the overflow? [y/N]: "
+            ).strip().lower()
+            if answer == "y":
+                # Write what fits on the current team, flag the rest for a new team
+                if remaining_on_task > 0:
+                    task_assignments.append((task, remaining_on_task))
+                    hours_left -= remaining_on_task
+                console.print(
+                    f"  [dim]Overflow will need to be assigned to a new team manually "
+                    f"after this session.[/dim]"
+                )
+                continue
+            # Otherwise proceed with the excess hours as-is
+
         task_assignments.append((task, hours))
+        hours_left -= hours
 
     total_committed = sum(h for _, h in task_assignments)
 
@@ -357,11 +397,11 @@ def run_assign(args) -> None:
     )
     _print_email_draft(draft, console)
 
-    # ── Loop if student still has hours ───────────────────────────────────────
+    # ── Show remaining hours ──────────────────────────────────────────────────
     new_remaining = hours_remaining - total_committed
     if new_remaining > 0:
         console.print(
-            f"  [green]{student_meta['name']} still has {new_remaining}h available.[/green]"
+            f"\n  [green]{student_meta['name']} still has {new_remaining}h available.[/green]"
         )
 
 

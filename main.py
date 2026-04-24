@@ -99,6 +99,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_list.add_argument("--inactive",        action="store_true")
     p_list.add_argument("--pending-program", action="store_true",
                         help="Show only students with an unresolved program code (420.?? or 570.??).")
+    p_list.add_argument("--no-tasks",        action="store_true",
+                        help="Show only projects with no tasks defined.")
+    p_list.add_argument("--requeue",         action="store_true",
+                        help="Delete JSON files for --no-tasks projects so import re-processes them.")
 
     # ── import ────────────────────────────────────────────────────────────────
     p_imp = sub.add_parser("import", help="Bulk-import students and projects from a raw/ folder.")

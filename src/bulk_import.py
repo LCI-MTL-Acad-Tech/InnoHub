@@ -380,17 +380,28 @@ def _import_projects(
 
         # ── Early skip if already ingested ────────────────────────────────────
         # Compute a provisional project_id from the title + semester alone.
-        # Good enough to detect existing projects before any interactive prompts.
+        # Actual IDs are prefixed with the company slug, so we match on whether
+        # any existing ID contains the title slug and the semester suffix.
         if not dry_run:
             from src.ingest import _slugify as _sl
             from src.semester import parse as _ps
             _s = _ps(semester)
             _ss = _s.to_short() if _s else semester.replace(" ", "")
-            _provisional_id = f"{_sl(title)}_{_ss}"[:64]
-            # Also check with a common company prefix pattern
+            _title_slug = _sl(title)
+            # Strip common company prefixes so title slug can match regardless
+            # of which company prefix was prepended to the stored ID
+            def _strip_prefix(pid: str) -> str:
+                for sep in ["_"]:
+                    parts = pid.split(sep)
+                    # Try dropping 1 or 2 leading words (company slug segments)
+                    for skip in (1, 2):
+                        rest = sep.join(parts[skip:])
+                        if _title_slug[:20] in rest:
+                            return rest
+                return pid
             _already = any(
-                pid == _provisional_id or pid.endswith(f"_{_provisional_id}")
-                or pid.startswith(f"{_sl(title)}_")
+                (_title_slug in pid and pid.endswith(_ss))
+                or _title_slug[:30] in _strip_prefix(pid)
                 for pid in existing_projects
             )
             if _already:
@@ -553,8 +564,28 @@ def _import_projects(
 
 # ── Task extraction ───────────────────────────────────────────────────────────
 
+def _parse_hours(s: str) -> int | None:
+    """
+    Accept '150', '150h', '150 h', '150 hours', '150 heures'.
+    Returns int or None if unparseable.
+    """
+    s = re.sub(r"\s*(h|hours?|heures?)\s*$", "", s.strip(), flags=re.IGNORECASE)
+    try:
+        return int(s)
+    except ValueError:
+        return None
+
+
 _TOTAL_PAT = re.compile(
     r"^\s*(total|sous.total|subtotal|grand.total|estimé|estimated)\b",
+    re.IGNORECASE,
+)
+
+# Line format with hours FIRST: "150h Développement : description text"
+_LINE_HOURS_FIRST_PAT = re.compile(
+    r"^(\d+)\s*(?:h\b|heures?|hours?)\s+"   # hours at start
+    r"([^:\n]+?)"                             # label (before colon)
+    r"\s*:\s*",                               # colon separator
     re.IGNORECASE,
 )
 
@@ -759,6 +790,13 @@ def _extract_tasks(raw: str) -> list[dict]:
         if m:
             _add(m.group(1).strip(), int(m.group(2)))
 
+    # ── 1a. Hours-first line format: "150h Label : description" ──────────────
+    if not tasks:
+        for line in raw.splitlines():
+            m = _LINE_HOURS_FIRST_PAT.match(line.strip())
+            if m:
+                _add(m.group(2).strip(), int(m.group(1)))
+
     # ── 2. Inline / prose format ──────────────────────────────────────────────
     if not tasks:
         for m in _INLINE_PAT.finditer(raw):
@@ -866,14 +904,13 @@ def _confirm_tasks(
         result = []
         for t in extracted:
             raw_h = input(f"    {t['label']}: ").strip()
-            if raw_h == "0":
+            if raw_h in ("0", "0h"):
                 console.print("    Aborted.")
                 return None
             if not raw_h:
                 continue
-            try:
-                h = int(raw_h)
-            except ValueError:
+            h = _parse_hours(raw_h)
+            if h is None:
                 console.print(f"    Invalid hours — skipping '{t['label']}'.")
                 continue
             result.append({**t, "hours": h})
