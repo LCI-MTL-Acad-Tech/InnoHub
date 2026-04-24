@@ -68,21 +68,48 @@ def semester_program_info(semester: str, program_code: str) -> dict | None:
     return None
 
 def load_assignments() -> list[dict]:
-    with open(PATHS["assignments"], newline="") as f:
+    path = Path(PATHS["assignments"])
+    if not path.exists():
+        return []
+    with open(path, newline="") as f:
         return list(csv.DictReader(f))
 
 def append_assignment_rows(rows: list[dict]) -> None:
     path = Path(PATHS["assignments"])
-    write_header = not path.exists() or path.stat().st_size == 0
+    fieldnames = [
+        "assignment_id", "student_number", "student_email", "student_program",
+        "project_id", "project_lead_email", "semester", "team", "task_id", "task_label",
+        "hours_planned", "hours_committed", "status", "assigned_date",
+        "confirmed_date", "completed_date", "notes"
+    ]
+
+    # Check if file needs a header — read existing header if present
+    needs_header = True
+    if path.exists() and path.stat().st_size > 0:
+        with open(path, newline="") as f:
+            existing_header = f.readline().strip().split(",")
+        if existing_header == fieldnames:
+            needs_header = False
+        else:
+            # Header mismatch — rewrite entire file with correct header
+            # preserving existing data rows read by position
+            with open(path, newline="") as f:
+                reader = csv.reader(f)
+                all_rows = list(reader)
+            data_rows = all_rows[1:]  # skip old header
+            with open(path, "w", newline="") as f:
+                w = csv.writer(f)
+                w.writerow(fieldnames)
+                for row in data_rows:
+                    # Pad or trim to correct length
+                    if len(row) == len(fieldnames) - 1:
+                        row = row[:7] + [""] + row[7:]  # insert empty team
+                    w.writerow(row)
+            needs_header = False
+
     with open(path, "a", newline="") as f:
-        fieldnames = [
-            "assignment_id", "student_number", "student_email", "student_program",
-            "project_id", "project_lead_email", "semester", "team", "task_id", "task_label",
-            "hours_planned", "hours_committed", "status", "assigned_date",
-            "confirmed_date", "completed_date", "notes"
-        ]
-        w = csv.DictWriter(f, fieldnames=fieldnames)
-        if write_header:
+        w = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
+        if needs_header:
             w.writeheader()
         w.writerows(rows)
 

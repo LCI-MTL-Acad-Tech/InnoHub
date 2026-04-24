@@ -24,16 +24,16 @@ def _active_rows_for_student(student_number: str, rows: list[dict]) -> list[dict
     return [
         r for r in rows
         if r["student_number"] == student_number
-        and r["status"] in {"proposed", "confirmed"}
+        and r["status"] not in {"cancelled", "completed"}
     ]
 
 
 def _hours_committed(student_number: str, rows: list[dict]) -> int:
     return sum(
-        int(r.get("hours_planned", 0))
+        (int(r["hours_planned"]) if str(r.get("hours_planned","0")).isdigit() else 0)
         for r in rows
         if r["student_number"] == student_number
-        and r["status"] in {"proposed", "confirmed"}
+        and r["status"] not in {"cancelled", "completed"}
     )
 
 
@@ -54,12 +54,12 @@ def _select_team(
     existing_teams = sorted(set(
         r.get("team", "A") for r in rows
         if r["project_id"] == project_id
-        and r["status"] in {"proposed", "confirmed"}
+        and r["status"] not in {"cancelled", "completed"}
         and r.get("team", "")
     ))
     team_counts: dict[str, int] = {}
     for r in rows:
-        if r["project_id"] == project_id and r["status"] in {"proposed", "confirmed"}:
+        if r["project_id"] == project_id and r["status"] not in {"cancelled", "completed"}:
             t = r.get("team", "A") or "A"
             team_counts[t] = team_counts.get(t, 0) + 1
 
@@ -189,21 +189,21 @@ def run_assign(args) -> None:
     if team is None:
         return
 
-    # Check not already assigned to this project+team
+    # Note if already partially assigned to this project+team
     already = [
         r for r in rows
         if r["student_number"] == student_number
         and r["project_id"] == project_id
-        and r.get("team", "") == team
-        and r["status"] in {"proposed", "confirmed"}
+        and (r.get("team", "A") or "A") == (team or "A")
+        and r["status"] not in {"cancelled", "completed"}
     ]
     if already:
+        already_tasks = ", ".join(r["task_label"] for r in already)
         team_label = f" team {team}" if team else ""
         console.print(
-            f"  [yellow]{student_meta['name']} is already assigned to "
-            f"'{project_meta['title']}'{team_label} ({already[0]['status']}).[/yellow]"
+            f"  [dim]Already assigned to '{project_meta['title']}'{team_label}: "
+            f"{already_tasks}[/dim]"
         )
-        return
 
     team_label = f"  [dim]Team {team}[/dim]" if team else ""
     console.print(
@@ -222,9 +222,9 @@ def run_assign(args) -> None:
     for r in rows:
         if (r["project_id"] == project_id
                 and (r.get("team", "A") or "A") == (team or "A")
-                and r["status"] in {"proposed", "confirmed"}):
+                and r["status"] not in {"cancelled", "completed"}):
             tid = r["task_id"]
-            filled[tid] = filled.get(tid, 0) + int(r.get("hours_planned", 0))
+            filled[tid] = filled.get(tid, 0) + (int(r["hours_planned"]) if str(r.get("hours_planned","0")).isdigit() else 0)
 
     _print_task_selection(tasks, filled, console)
 
@@ -265,12 +265,12 @@ def run_assign(args) -> None:
             f"  [dim]{hours_left}h still available[/dim]"
         )
         raw_hours = input(
-            f"  Hours for '{task['label']}' [{default_hours}]: "
+            f"  Hours for '{task['label']}' [0–{default_hours}, Enter=0]: "
         ).strip()
         try:
-            hours = int(raw_hours) if raw_hours else default_hours
+            hours = int(raw_hours) if raw_hours else 0
         except ValueError:
-            hours = default_hours
+            hours = 0
 
         # ── Task capacity overflow — offer new team ───────────────────────────
         if hours > remaining_on_task and remaining_on_task >= 0:
@@ -279,19 +279,21 @@ def run_assign(args) -> None:
                 f"remaining on team {team} — {hours}h would exceed capacity.[/yellow]"
             )
             answer = input(
-                "  Start a new competing team for the overflow? [y/N]: "
+                "  [n]ew team for overflow  [a]llow excess  [c]ancel: "
             ).strip().lower()
-            if answer == "y":
-                # Write what fits on the current team, flag the rest for a new team
+            if answer in ("c", "cancel"):
+                console.print("  Cancelled.")
+                return
+            elif answer in ("n", "new"):
                 if remaining_on_task > 0:
                     task_assignments.append((task, remaining_on_task))
                     hours_left -= remaining_on_task
                 console.print(
-                    f"  [dim]Overflow will need to be assigned to a new team manually "
-                    f"after this session.[/dim]"
+                    f"  [dim]Assigned {remaining_on_task}h to team {team}. "
+                    f"Assign the remaining {hours - remaining_on_task}h to a new team separately.[/dim]"
                 )
                 continue
-            # Otherwise proceed with the excess hours as-is
+            # else "a" — allow excess and continue
 
         task_assignments.append((task, hours))
         hours_left -= hours
@@ -511,7 +513,7 @@ def run_edit(args) -> None:
         if r["student_number"] == student_number
         and r["project_id"]    == project_id
         and r["task_id"]       == task_id
-        and r["status"] in {"proposed", "confirmed"}
+        and r["status"] not in {"cancelled", "completed"}
     ]
 
     if not matches:
@@ -544,7 +546,7 @@ def run_edit(args) -> None:
         if (r["student_number"] == student_number
                 and r["project_id"] == project_id
                 and r["task_id"]    == task_id
-                and r["status"] in {"proposed", "confirmed"}):
+                and r["status"] not in {"cancelled", "completed"}):
             r["hours_planned"]   = new_hours
             r["hours_committed"] = new_hours
 
@@ -589,7 +591,7 @@ def run_remove(args) -> None:
             if r["student_number"] == student_number
             and r["project_id"]    == project_id
             and r["task_id"]       == task_id
-            and r["status"] in {"proposed", "confirmed"}
+            and r["status"] not in {"cancelled", "completed"}
         ]
         if not targets:
             console.print(
@@ -613,7 +615,7 @@ def run_remove(args) -> None:
             if (r["student_number"] == student_number
                     and r["project_id"] == project_id
                     and r["task_id"]    == task_id
-                    and r["status"] in {"proposed", "confirmed"}):
+                    and r["status"] not in {"cancelled", "completed"}):
                 r["status"] = "cancelled"
 
         rewrite_assignments(rows)
@@ -632,7 +634,7 @@ def run_remove(args) -> None:
             r for r in rows
             if r["student_number"] == student_number
             and r["project_id"]    == project_id
-            and r["status"] in {"proposed", "confirmed"}
+            and r["status"] not in {"cancelled", "completed"}
         ]
         if not targets:
             console.print(

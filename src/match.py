@@ -76,17 +76,21 @@ def _match_student(student_number: str, args) -> None:
     # ── Assignment loop ───────────────────────────────────────────────────────
     while True:
         # Recompute from in-memory rows each iteration
-        hours_committed = sum(
-            int(r.get("hours_planned", 0)) for r in rows
-            if r["student_number"] == student_number
-            and r["status"] in {"proposed", "confirmed"}
-        )
+        # Deduplicate by (project_id, task_label) keeping highest hours
+        seen_tasks: dict[tuple, int] = {}
+        for r in rows:
+            if (r["student_number"] == student_number
+                    and r["status"] not in {"cancelled", "completed"}):
+                key = (r["project_id"], r.get("task_label", r.get("task_id", "")))
+                h = int(r["hours_planned"]) if str(r.get("hours_planned", "0")).isdigit() else 0
+                seen_tasks[key] = max(seen_tasks.get(key, 0), h)
+        hours_committed = sum(seen_tasks.values())
         hours_remaining = hours_available - hours_committed
 
         assigned_projects = {
             r["project_id"] for r in rows
             if r["student_number"] == student_number
-            and r["status"] in {"proposed", "confirmed"}
+            and r["status"] not in {"cancelled", "completed"}
         }
         past_projects = {
             r["project_id"] for r in rows
@@ -103,8 +107,6 @@ def _match_student(student_number: str, args) -> None:
         # Rank eligible projects
         results = []
         for pid in list_ids("projects"):
-            if pid in assigned_projects:
-                continue
             try:
                 pmeta = load_json("projects", pid)
             except Exception:
@@ -141,11 +143,11 @@ def _match_student(student_number: str, args) -> None:
         committed_by_project: dict[str, int] = {}
         for r in rows:
             if (r["student_number"] == student_number
-                    and r["status"] in {"proposed", "confirmed"}):
+                    and r["status"] not in {"cancelled", "completed"}):
                 pid = r["project_id"]
                 committed_by_project[pid] = (
                     committed_by_project.get(pid, 0)
-                    + int(r.get("hours_planned", 0))
+                    + (int(r["hours_planned"]) if str(r.get("hours_planned","0")).isdigit() else 0)
                 )
 
         console.print(
@@ -370,7 +372,7 @@ def _match_company(company_name: str, args) -> None:
         assigned_students = {
             r["student_number"] for r in rows
             if r["project_id"] == pmeta["project_id"]
-            and r["status"] in {"proposed", "confirmed"}
+            and r["status"] not in {"cancelled", "completed"}
         }
 
         results = []
@@ -387,9 +389,9 @@ def _match_company(company_name: str, args) -> None:
                 continue
 
             hours_committed = sum(
-                int(r.get("hours_planned", 0)) for r in rows
+                (int(r["hours_planned"]) if str(r.get("hours_planned","0")).isdigit() else 0) for r in rows
                 if r["student_number"] == sid
-                and r["status"] in {"proposed", "confirmed"}
+                and r["status"] not in {"cancelled", "completed"}
             )
             hours_remaining = int(smeta.get("hours_available", 0)) - hours_committed
             if hours_remaining <= 0 and not getattr(args, "inactive", False):
@@ -498,14 +500,14 @@ def run_list(args) -> None:
             if pending_only and not is_pending:
                 continue
             committed = sum(
-                int(r.get("hours_planned", 0)) for r in rows
+                (int(r["hours_planned"]) if str(r.get("hours_planned","0")).isdigit() else 0) for r in rows
                 if r["student_number"] == sid
-                and r["status"] in {"proposed", "confirmed"}
+                and r["status"] not in {"cancelled", "completed"}
             )
             remaining  = int(m.get("hours_available", 0)) - committed
             n_assigned = len({r["assignment_id"] for r in rows
                                if r["student_number"] == sid
-                               and r["status"] in {"proposed", "confirmed"}})
+                               and r["status"] not in {"cancelled", "completed"}})
             status_c = {"active": "green", "inactive": "yellow",
                         "completed": "dim"}.get(m.get("status", ""), "white")
             prog_display = f"[bold yellow]{prog} ⚠[/bold yellow]" if is_pending else prog
@@ -698,7 +700,7 @@ def _status_student(student_number: str) -> None:
     active_rows = [
         r for r in rows
         if r["student_number"] == student_number
-        and r["status"] in {"proposed", "confirmed"}
+        and r["status"] not in {"cancelled", "completed"}
     ]
 
     hours_committed = sum(int(r["hours_planned"]) for r in active_rows)
@@ -721,6 +723,21 @@ def _status_student(student_number: str) -> None:
     )
 
     if active_rows:
+        # Deduplicate: for same project+task_label, keep only highest hours row
+        dedup: dict[tuple, dict] = {}
+        for r in active_rows:
+            key = (r["project_id"], r["task_label"])
+            existing = dedup.get(key)
+            if existing is None:
+                dedup[key] = r
+            else:
+                try:
+                    if int(r.get("hours_planned", 0)) > int(existing.get("hours_planned", 0)):
+                        dedup[key] = r
+                except ValueError:
+                    pass
+        active_rows = list(dedup.values())
+
         # Group by project
         by_project: dict[str, list[dict]] = {}
         for r in active_rows:
@@ -782,7 +799,7 @@ def _status_project(project_id: str) -> None:
     active_rows = [
         r for r in rows
         if r["project_id"] == project_id
-        and r["status"] in {"proposed", "confirmed"}
+        and r["status"] not in {"cancelled", "completed"}
     ]
 
     if n_teams <= 1:
@@ -948,7 +965,7 @@ def _status_coordinator(query: str) -> None:
         filled  = sum(
             int(r["hours_planned"]) for r in rows
             if r["project_id"] == pid
-            and r["status"] in {"proposed", "confirmed"}
+            and r["status"] not in {"cancelled", "completed"}
         )
         table.add_row(
             pmeta["title"],
@@ -1195,3 +1212,133 @@ def run_explain(args):
         top_n=getattr(args, "top_n", 10),
     )
     render_explanation(exp)
+
+
+# ── export-journal ────────────────────────────────────────────────────────────
+
+def run_export_journal(args) -> None:
+    """
+    Export a student's assignments as lci-stage-projects-v1 JSON
+    for import into the internship journal at lci-mtl-acad-tech.github.io/outils/log/
+    """
+    import json
+    from src.store import load_json, load_assignments
+
+    student_number = args.student_number
+
+    try:
+        student_meta = load_json("students", student_number)
+    except FileNotFoundError:
+        print(f"Student '{student_number}' not found.")
+        return
+
+    rows = load_assignments()
+
+    # Deduplicate by (project_id, task_label) keeping highest hours
+    dedup: dict[tuple, dict] = {}
+    for r in rows:
+        if r["student_number"] != student_number:
+            continue
+        if r["status"] in {"cancelled", "completed"}:
+            continue
+        key = (r["project_id"], r.get("task_label", ""))
+        existing = dedup.get(key)
+        if existing is None:
+            dedup[key] = r
+        else:
+            try:
+                if int(r.get("hours_planned", 0)) > int(existing.get("hours_planned", 0)):
+                    dedup[key] = r
+            except ValueError:
+                pass
+
+    if not dedup:
+        print(f"No active assignments found for {student_number}.")
+        return
+
+    # Group deduplicated rows by project
+    by_project: dict[str, list[dict]] = {}
+    for r in dedup.values():
+        by_project.setdefault(r["project_id"], []).append(r)
+
+    def _activity_type(label: str) -> str:
+        """Map task label keywords to journal activity_type values."""
+        l = label.lower()
+        if any(k in l for k in ["programm", "développement", "code", "backend", "frontend",
+                                  "unity", "c#", "node", "react", "api", "intégration ia",
+                                  "intelligence artificielle"]):
+            return "programming"
+        if any(k in l for k in ["design", "graphi", "pixel", "maquette", "wireframe",
+                                  "ui", "ux", "visuel", "illustration", "animation"]):
+            return "design"
+        if any(k in l for k in ["test", "débogage", "debug", "validation", "assurance qualité", "qa"]):
+            return "testing"
+        if any(k in l for k in ["analyse", "conception", "architecture", "planification",
+                                  "spécification", "modélisation"]):
+            return "planning"
+        if any(k in l for k in ["données", "data", "nettoyage", "organisation", "visualisation"]):
+            return "data-analysis"
+        if any(k in l for k in ["documentation", "rapport", "bilan", "présentation"]):
+            return "documentation"
+        if any(k in l for k in ["recherche", "research"]):
+            return "research"
+        if any(k in l for k in ["déploiement", "intégration intranet", "mise en ligne"]):
+            return "production"
+        if any(k in l for k in ["modélisation 3d", "animation 3d", "modelisation"]):
+            return "production"
+        return "programming"  # default for IT students
+
+    # Build projects list
+    projects = []
+    for project_id, task_rows in by_project.items():
+        try:
+            pmeta = load_json("projects", project_id)
+            project_name = pmeta.get("title", project_id)
+            company_name = ""
+            try:
+                cmeta = load_json("companies", pmeta["company_id"])
+                company_name = cmeta.get("name", "")
+            except Exception:
+                pass
+            brief = pmeta.get("notes", "")
+        except Exception:
+            project_name = project_id
+            company_name = ""
+            brief = ""
+
+        tasks = []
+        for r in sorted(task_rows, key=lambda x: x.get("task_id", "")):
+            label = r.get("task_label", "")
+            try:
+                hours = int(r.get("hours_planned", 0))
+            except ValueError:
+                hours = 0
+            if not label:
+                continue
+            tasks.append({
+                "description":     label,
+                "activity_type":   _activity_type(label),
+                "estimated_hours": hours,
+            })
+
+        projects.append({
+            "project_name":  project_name,
+            "client_name":   company_name,
+            "brief_summary": brief,
+            "tasks":         tasks,
+        })
+
+    output = {
+        "schema":   "lci-stage-projects-v1",
+        "projects": projects,
+    }
+
+    json_str = json.dumps(output, ensure_ascii=False, indent=2)
+
+    out_path = getattr(args, "out", None)
+    if out_path:
+        from pathlib import Path
+        Path(out_path).write_text(json_str, encoding="utf-8")
+        print(f"Exported {len(projects)} project(s) to {out_path}")
+    else:
+        print(json_str)

@@ -192,6 +192,15 @@ def build_parser() -> argparse.ArgumentParser:
                         choices=["name","semester","fill-rate","hours","program","company"],
                         help="Sort results by this key.")
 
+    # ── export-journal ────────────────────────────────────────────────────────
+    p_exp = sub.add_parser(
+        "export-journal",
+        help="Export a student's assignments as lci-stage-projects-v1 JSON for the internship journal."
+    )
+    p_exp.add_argument("student_number", metavar="STUDENT_NUMBER")
+    p_exp.add_argument("--out", metavar="FILE",
+                       help="Output file path (default: prints to stdout).")
+
     # ── web ───────────────────────────────────────────────────────────────────
     p_web = sub.add_parser("web", help="Start local web dashboard (http://127.0.0.1:8080).")
     p_web.add_argument("--port",     metavar="PORT", type=int, default=8080)
@@ -254,6 +263,7 @@ def main():
     elif cmd == "explain":           from src.match         import run_explain;   run_explain(args)
     elif cmd == "suggest-teams":     from src.suggest_teams import run;           run(args)
     elif cmd == "dashboard":         from src.dashboard_cli  import run;           run(args)
+    elif cmd == "export-journal":    from src.match         import run_export_journal; run_export_journal(args)
     elif cmd == "web":               from src.dashboard_web import run;           run(args)
     else:
         parser.print_help()
