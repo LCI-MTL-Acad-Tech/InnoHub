@@ -90,6 +90,14 @@ _ACCOUNTING_SIGNALS = [
 _COMMERCE_SIGNALS = [
     "gestion de commerces", "gestion de commerce", "commerce management",
     "410.d0", "lca.70", "gestion commerciale",
+    "business management", "gestion des affaires", "business admin",
+    "administration des affaires",
+]
+_CREATIVE_MGMT_SIGNALS = [
+    "industries créatives", "industries creatives", "creative industries",
+    "creative industry", "gestion des industries créatives",
+    "gestion des industries creatives", "profile in creative industries",
+    "profil gestion des industries", "410.x0",
 ]
 _SOCIAL_MEDIA_SIGNALS = [
     "réseaux sociaux", "reseaux sociaux", "social media", "médias sociaux",
@@ -137,16 +145,19 @@ def _extract_embedded_code(text: str) -> str | None:
 
 
 def _is_aec(text: str) -> bool:
-    return "aec" in text or "lca" in text
+    return ("aec" in text or "lca" in text or "acs" in text
+            or "attestation" in text)
 
 
 def _is_dec(text: str) -> bool:
-    return "dec" in text or "dcs" in text or "diploma" in text
+    return ("dec" in text or "dcs" in text or "diploma" in text
+            or "diplôme" in text or "diplome" in text)
 
 
 def _disambiguate(codes: set[str], dec_code: str, aec_code: str,
                   programs: list[dict], t: str,
-                  interactive: bool) -> tuple[str, str]:
+                  interactive: bool,
+                  raw: str = "") -> tuple[str, str]:
     """Resolve DEC vs AEC for a paired program using context or prompt."""
     if _is_aec(t):
         return aec_code, "fuzzy"
@@ -154,13 +165,17 @@ def _disambiguate(codes: set[str], dec_code: str, aec_code: str,
         return dec_code, "fuzzy"
     if not interactive:
         return dec_code, "fuzzy"  # default to DEC when unclear
+    # Show the student's original input so the coordinator can judge
+    if raw.strip():
+        import pydoc
+        pydoc.pager(f"Student wrote:\n\n{raw.strip()}")
     opts = [p for p in programs if p["code"] in codes]
     print(f"\n  DEC or AEC?")
     for i, p in enumerate(opts, 1):
         print(f"    {i}  {p['code']}  —  {p.get('label_fr', '')}")
-    raw = input("  Enter number (or blank for DEC): ").strip()
+    val = input("  Enter number (or blank for DEC): ").strip()
     try:
-        return opts[int(raw) - 1]["code"], "manual"
+        return opts[int(val) - 1]["code"], "manual"
     except (ValueError, IndexError):
         return dec_code, "fuzzy"
 
@@ -202,6 +217,10 @@ def resolve(
             if _contains(t, _IT_NET_SIGNALS):  return "420.BR", "embedded"
             if _contains(t, _IT_PROG_SIGNALS) or "programming" in t or "programmation" in t:
                 return "420.BP", "embedded"
+        # Some form responses embed a generic commerce code (410.D0) but the
+        # surrounding text identifies the creative industries profile (410.X0)
+        if embedded == "410.D0" and _contains(t, _CREATIVE_MGMT_SIGNALS):
+            return "410.X0", "embedded"
         return embedded, "embedded"
 
     # ── 3. Fuzzy match against labels ────────────────────────────────────────
@@ -259,13 +278,16 @@ def resolve(
     # Interior design (DEC/AEC pair)
     if _contains(t, _INTERIOR_SIGNALS):
         return _disambiguate(_INTERIOR_CODES, "570.E0", "NTA.21",
-                             programs, t, interactive)
+                             programs, t, interactive, raw=raw)
 
     # Fashion
     if _contains(t, _FASHION_SIGNALS):
         if _contains(t, ["commercialisation", "merchandising"]): return "571.C0", "fuzzy"
         if _contains(t, ["design de la mode", "fashion design"]): return "571.A0", "fuzzy"
         if interactive:
+            if raw.strip():
+                import pydoc
+                pydoc.pager(f"Student wrote:\n\n{raw.strip()}")
             opts = [p for p in programs if p["code"] in _FASHION_CODES]
             print("\n  Fashion — which program?")
             for i, p in enumerate(opts, 1):
@@ -284,17 +306,21 @@ def resolve(
     # Accounting (DEC/AEC pair)
     if _contains(t, _ACCOUNTING_SIGNALS):
         return _disambiguate(_ACCOUNTING_CODES, "410.B0", "LCA.71",
-                             programs, t, interactive)
+                             programs, t, interactive, raw=raw)
+
+    # Creative industries management (DEC only — 410.X0, no AEC pair)
+    if _contains(t, _CREATIVE_MGMT_SIGNALS):
+        return "410.X0", "fuzzy"
 
     # Commerce management (DEC/AEC pair)
     if _contains(t, _COMMERCE_SIGNALS):
         return _disambiguate(_COMMERCE_CODES, "410.D0", "LCA.70",
-                             programs, t, interactive)
+                             programs, t, interactive, raw=raw)
 
     # Logistics (DEC/AEC pair)
     if _contains(t, _LOGISTICS_SIGNALS):
         return _disambiguate(_LOGISTICS_CODES, "410.G0", "LCA.5G",
-                             programs, t, interactive)
+                             programs, t, interactive, raw=raw)
 
     # ── 5. Low-confidence fuzzy ───────────────────────────────────────────────
     if top_score >= 60:
