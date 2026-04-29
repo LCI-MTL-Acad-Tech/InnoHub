@@ -53,14 +53,16 @@ def _match_student(student_number: str, args) -> None:
             return
 
     emb_path = student_meta.get("embedding_file", "")
-    if not emb_path or not Path(emb_path).exists():
+    if emb_path and Path(emb_path).exists():
+        s_vec = load_embedding(emb_path)
+        has_embedding = True
+    else:
+        s_vec = None
+        has_embedding = False
         console.print(
-            f"  [red]No embedding found for {student_number}. "
-            f"Re-ingest their documents.[/red]"
+            f"  [yellow]No embedding for {student_number} — "
+            f"projects will be listed alphabetically with score 0.[/yellow]"
         )
-        return
-
-    s_vec = load_embedding(emb_path)
 
     # ── Load state once into memory ───────────────────────────────────────────
     rows             = load_assignments()
@@ -128,7 +130,10 @@ def _match_student(student_number: str, args) -> None:
             fill = project_fill(pmeta, rows)
             if not fill["has_open_slot"] and not getattr(args, "inactive", False):
                 continue
-            score = cosine_similarity(s_vec, load_embedding(p_emb))
+            if has_embedding:
+                score = cosine_similarity(s_vec, load_embedding(p_emb))
+            else:
+                score = 0.0
             results.append((score, pmeta, company_name, fill))
 
         results.sort(key=lambda x: x[0], reverse=True)

@@ -160,16 +160,14 @@ def _import_students(
             results.append(("?", f"row {i}", "?", "?", "skipped", "no student ID"))
             continue
 
-        # ── Early skip if already ingested and no new CV ──────────────────────
+        # ── Early skip if already ingested ────────────────────────────────────
         if sid in existing and not dry_run:
-            cv_path_check = _find_file(raw_dir / "CV", cv_fname) if cv_fname else None
-            if not cv_path_check:
-                console.print(
-                    f"  [dim]Row {i}[/dim]  {sid}  "
-                    f"[dim]already ingested, no new CV — skipped[/dim]"
-                )
-                results.append((sid, "", "", "", "skipped", "already exists"))
-                continue
+            console.print(
+                f"  [dim]Row {i}[/dim]  {sid}  "
+                f"[dim]already ingested — skipped[/dim]"
+            )
+            results.append((sid, "", "", "", "skipped", "already exists"))
+            continue
 
         # ── Extract name from CV filename, then email ─────────────────────────
         name = (_name_from_forms_filename(cv_fname)
@@ -589,6 +587,14 @@ _LINE_HOURS_FIRST_PAT = re.compile(
     re.IGNORECASE,
 )
 
+# Line format with hours FIRST and em-dash separator: "12 h — Label text"
+_LINE_HOURS_DASH_PAT = re.compile(
+    r"^(\d+)\s*(?:h\b|heures?|hours?)"       # hours at start
+    r"\s*[–—]\s*"                             # em-dash or en-dash separator
+    r"(.+)$",                                 # label (rest of line)
+    re.IGNORECASE,
+)
+
 # Line format: "Label : 40 h" or "Label — 40h" or "• Label : 30-50h"
 _LINE_PAT = re.compile(
     r"^[•\-*\d.]*\s*"           # optional bullet / number
@@ -796,6 +802,26 @@ def _extract_tasks(raw: str) -> list[dict]:
             m = _LINE_HOURS_FIRST_PAT.match(line.strip())
             if m:
                 _add(m.group(2).strip(), int(m.group(1)))
+
+    # ── 1b. Hours-first with em-dash: "12 h — Label text" ────────────────────
+    # Run independently — does not depend on other passes finding nothing,
+    # since this format is unambiguous (hours + dash + label)
+    dash_tasks: list[dict] = []
+    seen_dash: set[str] = set()
+    for line in raw.splitlines():
+        m = _LINE_HOURS_DASH_PAT.match(line.strip())
+        if m:
+            label = m.group(2).strip()
+            hours = int(m.group(1))
+            if label and hours > 0 and not _TOTAL_PAT.match(label):
+                key = label.lower()[:30]
+                if key not in seen_dash:
+                    seen_dash.add(key)
+                    dash_tasks.append({"label": label, "hours": hours,
+                                       "description": ""})
+    if dash_tasks and len(dash_tasks) > len(tasks):
+        # The dash format found more tasks — use it
+        tasks = dash_tasks
 
     # ── 2. Inline / prose format ──────────────────────────────────────────────
     if not tasks:
@@ -1212,15 +1238,25 @@ def _nfc_lower(s: str) -> str:
 _DOC_EXTENSIONS = {".pdf", ".docx", ".doc", ".png", ".jpg", ".jpeg", ".tiff", ".tif", ".bmp", ".webp"}
 
 
+def _ascii_only(s: str) -> str:
+    """Strip to lowercase ASCII alphanumerics only — for accent-blind matching."""
+    import unicodedata
+    # Decompose accented chars then drop non-ASCII
+    nfkd = unicodedata.normalize("NFKD", s)
+    return re.sub(r"[^a-z0-9]", "", nfkd.lower())
+
+
 def _find_file(folder: Path, forms_value: str) -> Path | None:
     """
     Find the actual file in folder whose stem best matches the Forms value.
     Accepts PDF, DOCX, and image formats. forms_value may be a plain filename
     or a SharePoint URL.
 
-    All comparisons are case-folded and NFC-normalised so that accented
-    characters in filenames (e.g. 'Giguère') match regardless of whether
-    they were URL-encoded or stored in NFD form by the OS.
+    Matching passes (in order):
+      1. Exact NFC-normalised stem match
+      2. Partial NFC match (one contains the other)
+      3. Last-underscore name segment match
+      4. ASCII-only alphanumeric match (handles all accent/encoding issues)
     """
     if not folder.exists() or not forms_value:
         return None
@@ -1232,25 +1268,36 @@ def _find_file(folder: Path, forms_value: str) -> Path | None:
     candidates = [f for f in folder.iterdir()
                   if f.is_file() and f.suffix.lower() in _DOC_EXTENSIONS]
 
-    # Exact stem match
+    # Pass 1: Exact NFC stem match
     for f in candidates:
         if _nfc_lower(f.stem) == target_stem:
             return f
 
-    # Partial match — target stem contained in file stem, or vice versa
+    # Pass 2: Partial NFC match
     for f in candidates:
         fs = _nfc_lower(f.stem)
         if target_stem in fs or fs in target_stem:
             return f
 
-    # Last resort: match on the name portion after the last underscore
-    # e.g. "CV_20260127_EN_Xavier Giguère" → match on "xavier giguère"
+    # Pass 3: Last-underscore name segment
     if "_" in target_stem:
         name_part = target_stem.rsplit("_", 1)[-1].strip()
         if name_part:
             for f in candidates:
                 if name_part in _nfc_lower(f.stem):
                     return f
+
+    # Pass 4: ASCII-only alphanumeric — handles é/è/ê and other encoding issues
+    target_ascii = _ascii_only(target_stem)
+    if target_ascii:
+        for f in candidates:
+            if _ascii_only(f.stem) == target_ascii:
+                return f
+        # Partial ASCII match
+        for f in candidates:
+            fa = _ascii_only(f.stem)
+            if target_ascii in fa or fa in target_ascii:
+                return f
 
     return None
 
