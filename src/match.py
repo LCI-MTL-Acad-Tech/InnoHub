@@ -104,6 +104,7 @@ def _match_student(student_number: str, args) -> None:
             console.print(
                 f"  [dim]{student_meta['name']} has no hours remaining.[/dim]\n"
             )
+            _status_student(student_number)
             break
 
         # Rank eligible projects
@@ -128,8 +129,6 @@ def _match_student(student_number: str, args) -> None:
             except Exception:
                 company_name = pmeta.get("company_id", "")
             fill = project_fill(pmeta, rows)
-            if not fill["has_open_slot"] and not getattr(args, "inactive", False):
-                continue
             # Per-student hours already on this project
             student_filled = sum(
                 (int(r["hours_planned"]) if str(r.get("hours_planned", "0")).isdigit() else 0)

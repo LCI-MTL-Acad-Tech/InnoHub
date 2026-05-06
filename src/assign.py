@@ -58,10 +58,12 @@ def _select_team(
         and r.get("team", "")
     ))
     team_counts: dict[str, int] = {}
+    team_seen: dict[str, set] = {}
     for r in rows:
         if r["project_id"] == project_id and r["status"] not in {"cancelled", "completed"}:
             t = r.get("team", "A") or "A"
-            team_counts[t] = team_counts.get(t, 0) + 1
+            team_seen.setdefault(t, set()).add(r["student_number"])
+    team_counts = {t: len(sids) for t, sids in team_seen.items()}
 
     # Single team — auto-assign to A, no prompt needed
     if n_teams <= 1 and not existing_teams:
@@ -71,9 +73,31 @@ def _select_team(
         # Only team A exists — return it silently
         return existing_teams[0]
 
+    # Build language label per team from member profiles
+    from src.store import load_json as _lj
+    from src.balance import _lang_group, _team_display_label
+
+    team_sids: dict[str, list[str]] = {}
+    for r in rows:
+        if r["project_id"] == project_id and r["status"] not in {"cancelled", "completed"}:
+            t = r.get("team", "A") or "A"
+            team_sids.setdefault(t, [])
+            if r["student_number"] not in team_sids[t]:
+                team_sids[t].append(r["student_number"])
+
+    def _team_lang_label(letter: str) -> str:
+        profiles = []
+        for sid in team_sids.get(letter, []):
+            try:
+                profiles.append(_lj("students", sid).get("language_profile", "undefined"))
+            except Exception:
+                pass
+        return _team_display_label(letter, profiles) if profiles else letter
+
     console.print(f"\n  [bold]{n_teams} competing teams[/bold]  — current members:")
     for L in letters:
-        console.print(f"    {L}  {team_counts.get(L, 0)} student(s)")
+        lang_label = _team_lang_label(L)
+        console.print(f"    [cyan]{lang_label}[/cyan]  {team_counts.get(L, 0)} student(s)")
 
     raw = input(
         f"  Assign to which team? [{'/'.join(letters)}] "
@@ -109,24 +133,39 @@ def _print_email_draft(draft: dict, console: Console) -> None:
     console.print(f"  [dim]──────────────────────────────────────────────────────[/dim]\n")
 
 
-def _print_task_selection(tasks: list[dict], filled: dict[str, int], console: Console) -> None:
+def _print_task_selection(
+    tasks: list[dict],
+    filled: dict[str, int],
+    student_number: str,
+    rows: list[dict],
+    console: Console,
+) -> None:
     table = Table(box=box.SIMPLE_HEAD, show_header=True, header_style="bold")
-    table.add_column("#",         style="dim",   width=3)
-    table.add_column("Task",      style="white", min_width=28)
-    table.add_column("Total",     style="dim",   justify="right", width=7)
-    table.add_column("Filled",    style="cyan",  justify="right", width=7)
-    table.add_column("Remaining", style="green", justify="right", width=10)
+    table.add_column("#",         style="dim",     width=3)
+    table.add_column("Task",      style="white",   min_width=28)
+    table.add_column("Total",     style="dim",     justify="right", width=7)
+    table.add_column("Assigned",  style="cyan",    justify="right", width=9)
+    table.add_column("Global",    style="magenta", justify="right", width=8)
+    table.add_column("Remaining", style="green",   justify="right", width=10)
 
     for i, t in enumerate(tasks, 1):
-        tid       = t["task_id"]
-        f         = filled.get(tid, 0)
-        remaining = t["hours"] - f
+        tid      = t["task_id"]
+        global_f = filled.get(tid, 0)
+        student_f = sum(
+            (int(r["hours_planned"]) if str(r.get("hours_planned", "0")).isdigit() else 0)
+            for r in rows
+            if r["task_id"] == tid
+            and r["student_number"] == student_number
+            and r["status"] not in {"cancelled", "completed"}
+        )
+        remaining = t["hours"] - global_f
         rem_style = "green" if remaining > 0 else "dim"
         table.add_row(
             str(i),
             t["label"],
             f"{t['hours']}h",
-            f"{f}h",
+            f"{student_f}h",
+            f"{global_f}h",
             f"[{rem_style}]{remaining}h[/{rem_style}]",
         )
     console.print(table)
@@ -226,7 +265,7 @@ def run_assign(args) -> None:
             tid = r["task_id"]
             filled[tid] = filled.get(tid, 0) + (int(r["hours_planned"]) if str(r.get("hours_planned","0")).isdigit() else 0)
 
-    _print_task_selection(tasks, filled, console)
+    _print_task_selection(tasks, filled, student_number, rows, console)
 
     # ── Task selection ────────────────────────────────────────────────────────
     raw = input(

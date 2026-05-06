@@ -106,14 +106,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     # ── import ────────────────────────────────────────────────────────────────
     p_imp = sub.add_parser("import", help="Bulk-import students and projects from a raw/ folder.")
-    p_imp.add_argument("--dir",      metavar="PATH", required=True,
+    p_imp.add_argument("--dir",         metavar="PATH", required=True,
                        help="Path to the raw/ folder containing students.csv, projects.csv, CV/, CL/, Desc/.")
-    p_imp.add_argument("--semester", metavar="TAG", required=True,
+    p_imp.add_argument("--semester",    metavar="TAG", required=True,
                        help="Semester for all imported entities (e.g. 'Winter 2026').")
-    p_imp.add_argument("--hours",    metavar="N",   type=int, default=135,
+    p_imp.add_argument("--hours",       metavar="N",   type=int, default=135,
                        help="Default hours available per student. Default: 135.")
-    p_imp.add_argument("--dry-run",  action="store_true",
+    p_imp.add_argument("--dry-run",     action="store_true",
                        help="Parse and validate without writing anything to disk.")
+    p_imp.add_argument("--teams-file",  metavar="FILE",
+                       help="XLSX or CSV with language/leadership/liaison responses (e.g. raw/teams.xlsx). "
+                            "Matched to existing students by email. Updates profile fields only, no re-embedding.")
 
     # ── activate / deactivate ─────────────────────────────────────────────────
     for cmd in ("activate", "deactivate"):
@@ -147,6 +150,22 @@ def build_parser() -> argparse.ArgumentParser:
     p_explain.add_argument("--top-n",        metavar="N", type=int, default=10,
                            help="Number of shared terms to show. Default: 10.")
 
+    # ── lead ──────────────────────────────────────────────────────────────────
+    p_lead = sub.add_parser("lead", help="Assign or remove team lead role for a student.")
+    p_lead.add_argument("student_number", metavar="STUDENT_NUMBER")
+    p_lead.add_argument("--project",      metavar="PROJECT_ID",
+                        help="Project to lead (prompted if omitted).")
+    p_lead.add_argument("--remove",       action="store_true",
+                        help="Remove the student's lead and liaison roles.")
+
+    # ── balance ───────────────────────────────────────────────────────────────
+    p_balance = sub.add_parser(
+        "balance",
+        help="Distribute students into balanced language-aware teams per project."
+    )
+    p_balance.add_argument("--project",  metavar="PROJECT_ID", help="Balance a single project.")
+    p_balance.add_argument("--semester", metavar="TAG",         help="Limit to a specific semester.")
+
     # ── suggest-teams ─────────────────────────────────────────────────────────
     p_suggest = sub.add_parser(
         "suggest-teams",
@@ -161,36 +180,24 @@ def build_parser() -> argparse.ArgumentParser:
     p_reset = sub.add_parser("reset", help="Wipe data and start fresh (asks for confirmation).")
     p_reset.add_argument("--hard", action="store_true",
                          help="Also delete documents and embeddings (cannot be undone).")
+
+    # ── dashboard ─────────────────────────────────────────────────────────────
     p_dash = sub.add_parser("dashboard", help="Show CLI dashboard.")
-    # Filters
-    p_dash.add_argument("--semester",    metavar="TAG",    action="append",
-                        help="Filter by semester (repeatable).")
-    p_dash.add_argument("--year",        metavar="YYYY",   type=int, action="append",
-                        help="Filter by calendar year (repeatable).")
-    p_dash.add_argument("--company",     metavar="NAME",   action="append",
-                        help="Filter by company name (repeatable, fuzzy).")
-    p_dash.add_argument("--program",     metavar="CODE",   action="append",
-                        help="Filter by student program code (repeatable).")
-    p_dash.add_argument("--coordinator", metavar="NAME",   action="append",
-                        help="Filter by coordinator name or email (repeatable, fuzzy).")
-    p_dash.add_argument("--language",    metavar="LANG",   choices=["fr", "en"],
-                        help="Filter by project language.")
+    p_dash.add_argument("--semester",    metavar="TAG",    action="append")
+    p_dash.add_argument("--year",        metavar="YYYY",   type=int, action="append")
+    p_dash.add_argument("--company",     metavar="NAME",   action="append")
+    p_dash.add_argument("--program",     metavar="CODE",   action="append")
+    p_dash.add_argument("--coordinator", metavar="NAME",   action="append")
+    p_dash.add_argument("--language",    metavar="LANG",   choices=["fr", "en"])
     p_dash.add_argument("--status",      metavar="STATUS", action="append",
                         choices=["proposed","confirmed","unassigned",
-                                 "active","inactive","closed","completed"],
-                        help="Filter by status (repeatable).")
-    p_dash.add_argument("--unplaced",       action="store_true",
-                        help="Show only students with no confirmed assignment.")
-    p_dash.add_argument("--unfilled",       action="store_true",
-                        help="Show only projects with remaining hours.")
-    p_dash.add_argument("--no-coordinator", action="store_true",
-                        help="Show only projects with no coordinator assigned.")
-    # Grouping and sorting
-    p_dash.add_argument("--group-by",  metavar="KEY",
-                        help="Group by: year, academic-year, semester, company, program, coordinator (comma-separated for nested).")
+                                 "active","inactive","closed","completed"])
+    p_dash.add_argument("--unplaced",       action="store_true")
+    p_dash.add_argument("--unfilled",       action="store_true")
+    p_dash.add_argument("--no-coordinator", action="store_true")
+    p_dash.add_argument("--group-by",  metavar="KEY")
     p_dash.add_argument("--sort-by",   metavar="KEY",
-                        choices=["name","semester","fill-rate","hours","program","company"],
-                        help="Sort results by this key.")
+                        choices=["name","semester","fill-rate","hours","program","company"])
 
     # ── export-journal ────────────────────────────────────────────────────────
     p_exp = sub.add_parser(
@@ -206,8 +213,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_web.add_argument("--port",     metavar="PORT", type=int, default=8080)
     p_web.add_argument("--semester", metavar="TAG")
     p_web.add_argument("--group-by", metavar="MODE", choices=["calendar", "academic"],
-                       default="calendar",
-                       help="Group semesters by calendar year or academic year. Default: calendar.")
+                       default="calendar")
 
     return parser
 
@@ -215,12 +221,10 @@ def build_parser() -> argparse.ArgumentParser:
 def main():
     from src.setup_wizard import needs_setup, run_wizard
 
-    # First-run: config.toml absent or data/ empty → offer guided setup
     if len(sys.argv) == 1 and needs_setup():
         run_wizard()
         return
 
-    # config.toml must exist before bootstrap (which reads it)
     if not Path("config.toml").exists():
         print(
             "  config.toml not found.\n"
@@ -245,26 +249,28 @@ def main():
 
     # Dispatch
     cmd = args.command
-    if   cmd == "ingest":            from src.ingest        import run;           run(args)
-    elif cmd == "match":             from src.match         import run;           run(args)
-    elif cmd == "assign":            from src.assign        import run_assign;    run_assign(args)
-    elif cmd == "confirm":           from src.assign        import run_confirm;   run_confirm(args)
-    elif cmd == "edit":              from src.assign        import run_edit;      run_edit(args)
-    elif cmd == "remove":            from src.assign        import run_remove;    run_remove(args)
+    if   cmd == "ingest":            from src.ingest        import run;                    run(args)
+    elif cmd == "match":             from src.match         import run;                    run(args)
+    elif cmd == "assign":            from src.assign        import run_assign;             run_assign(args)
+    elif cmd == "confirm":           from src.assign        import run_confirm;            run_confirm(args)
+    elif cmd == "edit":              from src.assign        import run_edit;               run_edit(args)
+    elif cmd == "remove":            from src.assign        import run_remove;             run_remove(args)
     elif cmd == "coord":             from src.coordinator   import run_assign_coordinator; run_assign_coordinator(args)
-    elif cmd == "status":            from src.match         import run_status;    run_status(args)
-    elif cmd == "list":              from src.match         import run_list;      run_list(args)
-    elif cmd == "import":            from src.bulk_import   import run;           run(args)
+    elif cmd == "status":            from src.match         import run_status;             run_status(args)
+    elif cmd == "list":              from src.match         import run_list;               run_list(args)
+    elif cmd == "import":            from src.bulk_import   import run;                    run(args)
     elif cmd in ("activate",
-                 "deactivate"):      from src.lifecycle     import run;           run(args)
-    elif cmd == "close":             from src.lifecycle     import run_close;     run_close(args)
-    elif cmd == "complete":          from src.lifecycle     import run_complete;  run_complete(args)
-    elif cmd == "reassign":          from src.lifecycle     import run_reassign;  run_reassign(args)
-    elif cmd == "explain":           from src.match         import run_explain;   run_explain(args)
-    elif cmd == "suggest-teams":     from src.suggest_teams import run;           run(args)
-    elif cmd == "dashboard":         from src.dashboard_cli  import run;           run(args)
-    elif cmd == "export-journal":    from src.match         import run_export_journal; run_export_journal(args)
-    elif cmd == "web":               from src.dashboard_web import run;           run(args)
+                 "deactivate"):      from src.lifecycle     import run;                    run(args)
+    elif cmd == "close":             from src.lifecycle     import run_close;              run_close(args)
+    elif cmd == "complete":          from src.lifecycle     import run_complete;           run_complete(args)
+    elif cmd == "reassign":          from src.lifecycle     import run_reassign;           run_reassign(args)
+    elif cmd == "explain":           from src.match         import run_explain;            run_explain(args)
+    elif cmd == "lead":              from src.lead          import run;                    run(args)
+    elif cmd == "balance":           from src.balance       import run;                    run(args)
+    elif cmd == "suggest-teams":     from src.suggest_teams import run;                    run(args)
+    elif cmd == "dashboard":         from src.dashboard_cli  import run;                   run(args)
+    elif cmd == "export-journal":    from src.match         import run_export_journal;     run_export_journal(args)
+    elif cmd == "web":               from src.dashboard_web import run;                    run(args)
     else:
         parser.print_help()
 

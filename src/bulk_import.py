@@ -24,21 +24,25 @@ from rich.console import Console
 from rich.table import Table
 from rich import box
 
+# Hours already completed in class before the placement begins.
+# Subtract from the program's total internship hours to get placement hours.
 COURSE_DURATION = 15
+
 TODAY = date.today().isoformat()
 
 # MS Forms column names — students
-_COL_ID       = "Votre numéro d'étudiant / Your student ID number"
-_COL_EMAIL    = "Votre adresse e-mail LCI / Your college email"
-_COL_PROGRAM  = "Nom de votre programme d'études / Your study program name "
-_COL_CV       = "Votre CV d'une page à jour / Your up-to-date one-page CV"
-_COL_CL       = "Lettre de motivation / Cover letter"
-_COL_LINKEDIN = "URL de votre profil LinkedIn / Your LinkedIn profile URL"
-_COL_PORTFOLIO= "URL(s) de portfolio(s) / Your portfolio URL(s)"
+_COL_ID         = "Votre numéro d'étudiant / Your student ID number"
+_COL_EMAIL      = "Votre adresse e-mail LCI / Your college email"
+_COL_PROGRAM    = "Nom de votre programme d'études / Your study program name "
+_COL_CV         = "Votre CV d'une page à jour / Your up-to-date one-page CV"
+_COL_CL         = "Lettre de motivation / Cover letter"
+_COL_LINKEDIN   = "URL de votre profil LinkedIn / Your LinkedIn profile URL"
+_COL_PORTFOLIO  = "URL(s) de portfolio(s) / Your portfolio URL(s)"
+_COL_LANG       = "Langue(s) de travail"
+_COL_LEADERSHIP = "Leadership"
+_COL_LIAISON    = "Liaison"
 
 # MS Forms column names — projects
-# These are the exact column headers from the MS Forms Excel export.
-# _get() also does prefix matching so truncated column names still work.
 _PCOL_NAME    = "Votre nom / Your name"
 _PCOL_EMAIL   = "Adresse e-mail / Contact email"
 _PCOL_CLIENT  = "Description du client / Client description"
@@ -49,13 +53,95 @@ _PCOL_CONTACT = "Veuillez décrire votre mode et fréquence de contact préfér�
 _PCOL_MORE    = "Envoyez-vous plus d'informations ? / Are you sending more information?"
 
 
+# ── Profile resolvers ─────────────────────────────────────────────────────────
+
+def _resolve_language_profile(raw: str) -> str:
+    """
+    Map a Langue(s) de travail freetext answer to a short code.
+
+    Codes:
+      bilingual_helper  — fully bilingual, happy to help others
+      bilingual_passive — fully bilingual, not much help to others
+      strong_fr         — French strong, working on English
+      strong_en         — English strong, working on French
+      en_only           — English only
+      fr_only           — French only (or French dominant / English elementary)
+      trilingual        — three or more languages
+      undefined         — could not resolve
+    """
+    if not raw:
+        return "undefined"
+    r = raw.lower()
+    if "espagnol" in r or "spanish" in r or "trois" in r or "three" in r or "3 lang" in r:
+        return "trilingual"
+    if "bilingue" in r or "bilingual" in r:
+        if "aide" in r or "help" in r or "heureuse" in r or "happy" in r:
+            return "bilingual_helper"
+        return "bilingual_passive"
+    if "français" in r and ("élevé" in r or "elementaire" in r or "élémentaire" in r):
+        return "fr_only"
+    if "français" in r and ("fort" in r or "bon" in r or "strong" in r or "french is strong" in r):
+        return "strong_fr"
+    if "anglais" in r and ("fort" in r or "bon" in r or "strong" in r or "english is strong" in r):
+        return "strong_en"
+    if "anglais" in r and ("seulement" in r or "only" in r or "vraiment capable" in r or "really only" in r):
+        return "en_only"
+    if "français" in r and ("seulement" in r or "only" in r):
+        return "fr_only"
+    return "undefined"
+
+
+def _resolve_leadership(raw: str) -> str:
+    """
+    Map a Leadership freetext answer to a short code.
+
+    Codes:
+      lead     — already a team leader
+      willing  — would like to be
+      no       — not yet leadership material
+      undefined
+    """
+    if not raw:
+        return "undefined"
+    r = raw.lower()
+    if "déjà" in r or "already" in r:
+        return "lead"
+    if "souhaiterais" in r or "would like" in r:
+        return "willing"
+    if "pas encore" in r or "not yet" in r:
+        return "no"
+    return "undefined"
+
+
+def _resolve_liaison(raw: str) -> bool | None:
+    """
+    Map a Liaison freetext answer to True (willing) or False (not willing).
+    Returns None if the column was absent / unresolvable.
+    """
+    if not raw:
+        return None
+    r = raw.lower()
+    if "souhaiterais" in r or "would like" in r:
+        return True
+    if "ne serai pas" in r or "won't be" in r or "trop" in r or "too much" in r:
+        return False
+    return None
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 def run(args) -> None:
-    console   = Console()
+    console    = Console()
+    teams_file = getattr(args, "teams_file", None)
+    dry_run    = getattr(args, "dry_run", False)
+
+    # ── Teams profile patch (--teams-file) ────────────────────────────────────
+    if teams_file:
+        _patch_student_profiles(Path(teams_file), dry_run, console)
+        return
+
     raw_dir   = Path(args.dir)
     semester  = args.semester
-    dry_run   = getattr(args, "dry_run", False)
     default_h = getattr(args, "hours", 135)
 
     if not raw_dir.exists() or not raw_dir.is_dir():
@@ -94,6 +180,103 @@ def run(args) -> None:
         console.print("  [dim]No projects.csv / projects.xlsx found — skipping projects.[/dim]")
 
 
+# ── Teams profile patch ───────────────────────────────────────────────────────
+
+def _patch_student_profiles(teams_path: Path, dry_run: bool, console: Console) -> None:
+    """
+    Read a teams form export (XLSX or CSV) and patch language_profile,
+    leadership, and liaison_willing into existing student JSONs.
+    Matched by email address. No re-embedding.
+    """
+    from src.store import list_ids, load_json, save_json
+
+    if not teams_path.exists():
+        console.print(f"  [red]Teams file not found: {teams_path}[/red]")
+        return
+
+    rows = _read_tabular(teams_path)
+    if not rows:
+        console.print(f"  [red]Teams file is empty or unreadable: {teams_path.name}[/red]")
+        return
+
+    console.print(
+        f"\n  [bold]◈ Innovation Hub — Teams Profile Patch[/bold]"
+        f"  [dim]{teams_path.name}  ·  {len(rows)} row(s)[/dim]"
+        + ("  [yellow bold][DRY RUN][/yellow bold]" if dry_run else "")
+        + "\n"
+    )
+
+    # Build email → student_number index
+    email_index: dict[str, str] = {}
+    for sid in list_ids("students"):
+        try:
+            m = load_json("students", sid)
+            e = (m.get("email") or "").strip().lower()
+            if e:
+                email_index[e] = sid
+        except Exception:
+            pass
+
+    updated = 0
+    unmatched = 0
+
+    for i, row in enumerate(rows, 1):
+        # Email column in the teams form
+        email_raw = (_get(row, "Email") or _get(row, "Courriel") or "").strip().lower()
+        if not email_raw:
+            continue
+
+        sid = email_index.get(email_raw)
+        if not sid:
+            console.print(f"  [dim]Row {i}[/dim]  [yellow]{email_raw}[/yellow]  [dim]no match — skipped[/dim]")
+            unmatched += 1
+            continue
+
+        lang_raw       = _get(row, _COL_LANG)
+        leadership_raw = _get(row, _COL_LEADERSHIP)
+        liaison_raw    = _get(row, _COL_LIAISON)
+
+        language_profile = _resolve_language_profile(lang_raw)
+        leadership       = _resolve_leadership(leadership_raw)
+        liaison_willing  = _resolve_liaison(liaison_raw)
+
+        if dry_run:
+            console.print(
+                f"  [yellow]→[/yellow]  [dim]{i:>2}[/dim]  [cyan]{sid}[/cyan]  {email_raw}"
+                f"  lang=[bold]{language_profile}[/bold]"
+                f"  leadership=[bold]{leadership}[/bold]"
+                f"  liaison=[bold]{liaison_willing}[/bold]"
+            )
+            updated += 1
+            continue
+
+        try:
+            meta = load_json("students", sid)
+            meta["language_profile"] = language_profile
+            meta["leadership"]       = leadership
+            meta["liaison_willing"]  = liaison_willing
+            # Ensure new fields exist with defaults if not already present
+            meta.setdefault("team_lead_project", None)
+            meta.setdefault("liaison_project",   None)
+            save_json("students", sid, meta)
+            console.print(
+                f"  [green]✓[/green]  [dim]{i:>2}[/dim]  [cyan]{sid}[/cyan]  {email_raw}"
+                f"  lang=[bold]{language_profile}[/bold]"
+                f"  leadership=[bold]{leadership}[/bold]"
+                f"  liaison=[bold]{liaison_willing}[/bold]"
+            )
+            updated += 1
+        except Exception as e:
+            console.print(f"  [red]✗[/red]  [dim]{i:>2}[/dim]  [cyan]{sid}[/cyan]  {e}")
+
+    verb = "would update" if dry_run else "updated"
+    console.print(
+        f"\n  [bold]Done:[/bold]  [green]{updated} student(s) {verb}[/green]"
+        + (f"  [yellow]{unmatched} unmatched[/yellow]" if unmatched else "")
+        + "\n"
+    )
+
+
 # ── Student import ────────────────────────────────────────────────────────────
 
 def _import_students(
@@ -120,7 +303,6 @@ def _import_students(
 
     rows = _read_tabular(csv_path)
     if not rows:
-        # Try to give a useful error
         try:
             _read_tabular(csv_path)
         except Exception as e:
@@ -131,9 +313,14 @@ def _import_students(
 
     console.print(f"  [bold]Students[/bold]  ({len(rows)} rows)\n")
 
+    # Detect whether the form included language/leadership/liaison columns
+    first = rows[0] if rows else {}
+    has_lang       = bool(_get(first, _COL_LANG))
+    has_leadership = bool(_get(first, _COL_LEADERSHIP))
+    has_liaison    = bool(_get(first, _COL_LIAISON))
+
     # Diagnostic: show actual column names if expected ones are missing
     if rows:
-        first = rows[0]
         missing = [c for c in [_COL_ID, _COL_EMAIL, _COL_PROGRAM, _COL_CV]
                    if not _get(first, c) and _get(first, c) == ""]
         if all(not _get(first, c) for c in [_COL_ID, _COL_EMAIL]):
@@ -142,7 +329,7 @@ def _import_students(
                 console.print(f"    [dim]{repr(col)}[/dim]")
             return
 
-    results = []   # (student_number, name, program, confidence, status, notes)
+    results = []
 
     for i, row in enumerate(rows, 1):
         sid   = _get(row, _COL_ID)
@@ -153,6 +340,22 @@ def _import_students(
         linkedin  = _get(row, _COL_LINKEDIN)
         portfolio_raw = _get(row, _COL_PORTFOLIO)
         portfolio_urls = [u.strip() for u in re.split(r"[,\n]", portfolio_raw) if u.strip()]
+
+        # Language / leadership / liaison — resolved from form if columns present
+        lang_raw       = _get(row, _COL_LANG)       if has_lang       else ""
+        leadership_raw = _get(row, _COL_LEADERSHIP) if has_leadership else ""
+        liaison_raw    = _get(row, _COL_LIAISON)    if has_liaison    else ""
+
+        language_profile = _resolve_language_profile(lang_raw)
+        leadership       = _resolve_leadership(leadership_raw)
+        liaison_willing  = _resolve_liaison(liaison_raw)
+
+        if lang_raw and language_profile == "undefined":
+            _row_warn(console, i, sid or "?",
+                      f"Could not resolve language profile: '{lang_raw[:60]}'")
+        if leadership_raw and leadership == "undefined":
+            _row_warn(console, i, sid or "?",
+                      f"Could not resolve leadership: '{leadership_raw[:60]}'")
 
         # ── Validate student ID ───────────────────────────────────────────────
         if not sid:
@@ -179,7 +382,6 @@ def _import_students(
         code, confidence = resolve(prog_raw, programs, interactive=not dry_run)
 
         if code == "420.B0":
-            # 420.B0 — stream will be inferred from CV text during embedding
             _row_warn(console, i, sid,
                       f"IT stream unclear from form field — will infer from CV")
         elif code == "570.??":
@@ -201,16 +403,17 @@ def _import_students(
         elif code == "???":
             _row_warn(console, i, sid, f"Could not resolve program '{prog_raw}'")
 
-        # ── Hours available — look up from semester_programs table ────────────
+        # ── Hours available ───────────────────────────────────────────────────
         from src.store import semester_program_info
         sp_info = semester_program_info(semester, code)
         if sp_info:
-            hours = sp_info["hours"]
+            hours = sp_info["hours"] - COURSE_DURATION
         else:
-            hours = default_hours
+            hours = default_hours - COURSE_DURATION
             if not dry_run and code not in ("???", "570.??"):
                 _row_warn(console, i, sid,
                           f"No internship data for {code} / {semester} — using {hours}h default")
+
         cv_path = _find_file(cv_dir, cv_fname) if cv_fname else None
         cl_path = _find_file(cl_dir, cl_fname) if cl_fname else None
 
@@ -260,7 +463,6 @@ def _import_students(
         emb_path = ""
         if texts:
             try:
-                # Refine 420.B0 stream from CV text before embedding
                 if code == "420.B0":
                     from src.program_resolver import refine_it_stream
                     cv_text = texts[0] if texts else ""
@@ -280,21 +482,28 @@ def _import_students(
             except Exception as e:
                 _row_warn(console, i, sid, f"Embedding failed: {e}")
 
-        # Load existing meta to preserve reassignment history etc.
         if sid in existing:
             meta = load_json("students", sid)
             old_files = [d["filename"] for d in meta.get("documents", [])]
-            # Delete old files
             for fname in old_files:
                 old = doc_dir / fname
                 if old.exists():
                     old.unlink()
-            meta["documents"]      = doc_records
-            meta["embedding_file"] = emb_path
-            meta["program"]        = code
-            meta["linkedin_url"]   = linkedin
-            meta["portfolio_urls"] = portfolio_urls
-            meta["hours_available"] = hours
+            meta["documents"]        = doc_records
+            meta["embedding_file"]   = emb_path
+            meta["program"]          = code
+            meta["linkedin_url"]     = linkedin
+            meta["portfolio_urls"]   = portfolio_urls
+            meta["hours_available"]  = hours
+            # Only overwrite profile fields if the column was present in the form
+            if has_lang:
+                meta["language_profile"] = language_profile
+            if has_leadership:
+                meta["leadership"] = leadership
+            # liaison_willing on its own doesn't set liaison_project —
+            # that is set by the `lead` command. We only store the preference.
+            if has_liaison:
+                meta["liaison_willing"] = liaison_willing
             action = "replace"
         else:
             meta = {
@@ -303,10 +512,15 @@ def _import_students(
                 "email":                email,
                 "program":              code,
                 "semester_start":       semester,
-                "hours_available":      hours - COURSE_DURATION,
+                "hours_available":      hours,
                 "status":               "active",
                 "linkedin_url":         linkedin,
                 "portfolio_urls":       portfolio_urls,
+                "language_profile":     language_profile,
+                "leadership":           leadership,
+                "liaison_willing":      liaison_willing,  # True/False/None
+                "team_lead_project":    None,
+                "liaison_project":      None,
                 "reassignment_history": [],
                 "documents":            doc_records,
                 "embedding_file":       emb_path,
@@ -376,22 +590,15 @@ def _import_projects(
             results.append(("?", f"row {i}", "skipped", "no title"))
             continue
 
-        # ── Early skip if already ingested ────────────────────────────────────
-        # Compute a provisional project_id from the title + semester alone.
-        # Actual IDs are prefixed with the company slug, so we match on whether
-        # any existing ID contains the title slug and the semester suffix.
         if not dry_run:
             from src.ingest import _slugify as _sl
             from src.semester import parse as _ps
             _s = _ps(semester)
             _ss = _s.to_short() if _s else semester.replace(" ", "")
             _title_slug = _sl(title)
-            # Strip common company prefixes so title slug can match regardless
-            # of which company prefix was prepended to the stored ID
             def _strip_prefix(pid: str) -> str:
                 for sep in ["_"]:
                     parts = pid.split(sep)
-                    # Try dropping 1 or 2 leading words (company slug segments)
                     for skip in (1, 2):
                         rest = sep.join(parts[skip:])
                         if _title_slug[:20] in rest:
@@ -412,15 +619,12 @@ def _import_projects(
 
         console.print(f"  [dim]Row {i}[/dim]  [bold]{title}[/bold]")
 
-        # Teams default to 1 — use `innovhub suggest-teams` after import
         n_teams = 1
 
-        # ── Company resolution ────────────────────────────────────────────────
         company_id, company_name = _resolve_company(
             client_raw, lead_name, lead_email, dry_run, console
         )
 
-        # ── Task extraction ───────────────────────────────────────────────────
         extracted_tasks = _extract_tasks(tasks_raw)
         tasks = _confirm_tasks(extracted_tasks, tasks_raw, dry_run, console,
                                description=desc)
@@ -431,24 +635,20 @@ def _import_projects(
 
         total_hours = sum(t["hours"] for t in tasks)
 
-        # ── Language detection ────────────────────────────────────────────────
         language = detect_language(desc or tasks_raw)
 
-        # ── Find additional documents ─────────────────────────────────────────
         extra_files = []
         if desc_dir.exists():
             for f in desc_dir.iterdir():
                 if f.is_file() and _title_matches_file(title, f.name):
                     extra_files.append(f)
 
-        # ── Build full text for embedding ─────────────────────────────────────
         full_text = "\n\n".join(filter(None, [desc, tasks_raw,
                                               client_raw,
                                               *[f.read_text(errors="replace")
                                                 if f.suffix in {".txt",".md"}
                                                 else "" for f in extra_files]]))
 
-        # Deduplicate: if title slug starts with company_id slug, don't repeat it
         from src.ingest import _slugify
         from src.semester import parse as _parse_sem
         _sem = _parse_sem(semester)
@@ -461,7 +661,6 @@ def _import_projects(
             raw_id = f"{company_slug}_{title_slug}_{sem_short}"
         project_id = raw_id[:64]
 
-        # ── Skip if already ingested ──────────────────────────────────────────
         if project_id in existing_projects and not dry_run:
             console.print(
                 f"    [dim]Already ingested — skipped. "
@@ -481,15 +680,12 @@ def _import_projects(
             results.append((title, company_name, "would ingest", ""))
             continue
 
-        # ── Embed ─────────────────────────────────────────────────────────────
-        from src.embed import embed_text, save_embedding
-        from src.store import PATHS
-        from pathlib import Path as _P
-
         emb_path = ""
         if full_text.strip():
             try:
                 from src.embed import embed_text as _et, save_embedding as _se
+                from src.store import PATHS
+                from pathlib import Path as _P
                 vec      = _et(full_text)
                 emb_dir  = _P(PATHS["embeddings"]) / "projects"
                 emb_dir.mkdir(parents=True, exist_ok=True)
@@ -499,8 +695,9 @@ def _import_projects(
             except Exception as e:
                 console.print(f"    [yellow]⚠ Embedding failed: {e}[/yellow]")
 
-        # ── Save description as a text document ───────────────────────────────
         doc_records = []
+        from src.store import PATHS
+        from pathlib import Path as _P
         doc_dir_p   = _P(PATHS["documents"]) / "projects"
         doc_dir_p.mkdir(parents=True, exist_ok=True)
 
@@ -513,6 +710,7 @@ def _import_projects(
                 "ingested_date": TODAY,
             })
 
+        from src.ingest import _canonical_filename
         for ef in extra_files:
             dest_name = _canonical_filename(project_id, "project_proposal", ef)
             shutil.copy(ef, doc_dir_p / dest_name)
@@ -522,7 +720,6 @@ def _import_projects(
                 "ingested_date": TODAY,
             })
 
-        # ── Ensure company exists ─────────────────────────────────────────────
         _ensure_company(company_id, company_name, lead_name, lead_email,
                         language, semester)
 
@@ -563,10 +760,6 @@ def _import_projects(
 # ── Task extraction ───────────────────────────────────────────────────────────
 
 def _parse_hours(s: str) -> int | None:
-    """
-    Accept '150', '150h', '150 h', '150 hours', '150 heures'.
-    Returns int or None if unparseable.
-    """
     s = re.sub(r"\s*(h|hours?|heures?)\s*$", "", s.strip(), flags=re.IGNORECASE)
     try:
         return int(s)
@@ -579,103 +772,71 @@ _TOTAL_PAT = re.compile(
     re.IGNORECASE,
 )
 
-# Line format with hours FIRST: "150h Développement : description text"
 _LINE_HOURS_FIRST_PAT = re.compile(
-    r"^(\d+)\s*(?:h\b|heures?|hours?)\s+"   # hours at start
-    r"([^:\n]+?)"                             # label (before colon)
-    r"\s*:\s*",                               # colon separator
+    r"^(\d+)\s*(?:h\b|heures?|hours?)\s+"
+    r"([^:\n]+?)"
+    r"\s*:\s*",
     re.IGNORECASE,
 )
 
-# Line format with hours FIRST and em-dash separator: "12 h — Label text"
 _LINE_HOURS_DASH_PAT = re.compile(
-    r"^(\d+)\s*(?:h\b|heures?|hours?)"       # hours at start
-    r"\s*[–—]\s*"                             # em-dash or en-dash separator
-    r"(.+)$",                                 # label (rest of line)
+    r"^(\d+)\s*(?:h\b|heures?|hours?)"
+    r"\s*[–—]\s*"
+    r"(.+)$",
     re.IGNORECASE,
 )
 
-# Line format: "Label : 40 h" or "Label — 40h" or "• Label : 30-50h"
 _LINE_PAT = re.compile(
-    r"^[•\-*\d.]*\s*"           # optional bullet / number
-    r"(.+?)"                     # label (non-greedy)
-    r"\s*[:–—-]+\s*"             # separator
-    r"(\d+)"                     # lower bound of hours
-    r"(?:\s*[-–à]\s*\d+)?"       # optional upper bound (range) — ignored
+    r"^[•\-*\d.]*\s*"
+    r"(.+?)"
+    r"\s*[:–—-]+\s*"
+    r"(\d+)"
+    r"(?:\s*[-–à]\s*\d+)?"
     r"\s*(?:h\b|heures?|hours?)",
     re.IGNORECASE,
 )
 
-# Inline format: "label (50 h)" — embedded in prose.
-# Captures the label as the shortest phrase ending just before "(N h)".
-# Works forward: label starts at a word boundary after punctuation / connectors,
-# and must be 2–60 chars. The hours marker accepts "50h", "50 h", "50 heures".
 _INLINE_PAT = re.compile(
-    r"(?:^|(?<=[,;:\n(])|(?<=\bincluan[t])\s+|(?<=\bet\s)\s*)"  # anchor
+    r"(?:^|(?<=[,;:\n(])|(?<=\bincluan[t])\s+|(?<=\bet\s)\s*)"
     r"\s*"
-    r"([A-ZÀ-Ÿa-zà-ÿ/][^(,;:\n]{2,60}?)"        # label
-    r"\s*\(\s*(\d+)\s*(?:h\b|heures?|hours?)\s*\)",  # (N h)
+    r"([A-ZÀ-Ÿa-zà-ÿ/][^(,;:\n]{2,60}?)"
+    r"\s*\(\s*(\d+)\s*(?:h\b|heures?|hours?)\s*\)",
     re.IGNORECASE | re.MULTILINE,
 )
 
-# Simpler fallback: any "phrase (Nh)" where label is ≤ 8 words before the paren.
-# Used when _INLINE_PAT finds nothing.
 _PROSE_PAT = re.compile(
-    r"((?:\w[\w/'' -]{1,50}?))"       # label: up to ~8 words
+    r"((?:\w[\w/'' -]{1,50}?))"
     r"\s*\(\s*(\d+)\s*(?:h\b|heures?|hours?)\s*\)",
     re.IGNORECASE | re.UNICODE,
 )
 
-# French "pour N heures" pattern.
-# Strategy: find each "pour N heures" anchor, then extract the preceding label
-# by working backwards in code (see _extract_pour_heures function below).
-# This pattern just finds the anchors.
 _POUR_HEURES_ANCHOR = re.compile(
     r"\s+pour\s+(\d+)\s*heures?\b",
     re.IGNORECASE,
 )
 
 def _extract_pour_heures(raw: str) -> list[tuple[str, int]]:
-    """
-    Find all 'label pour N heures' constructs in a prose string.
-    Works by splitting at 'pour N heures' anchors and extracting the
-    label from the tail of each preceding segment.
-    """
     results = []
     parts = re.split(r"\s+pour\s+(\d+)\s*heures?\b", raw, flags=re.IGNORECASE)
-    # parts alternates: [text, hours, text, hours, ...text]
     for idx in range(1, len(parts), 2):
         hours_str = parts[idx]
         preceding = parts[idx - 1]
-
-        # Remove all parentheticals — they are clarifications, not the label
         preceding_clean = re.sub(r"\([^)]*\)", "", preceding).strip()
-
-        # The label is the last comma-separated segment.
-        # But if the last segment starts with a conjunction (ou, et…),
-        # it is a continuation of the previous segment — merge them.
         segments = [s.strip() for s in preceding_clean.split(",") if s.strip()]
         if not segments:
             continue
-
         _CONJ = re.compile(
             r"^(ou|et|ainsi|mais|donc|car|nor|or|and|but)\b",
             re.IGNORECASE
         )
-        # Merge trailing conjunction segments into the one before them
         while len(segments) > 1 and _CONJ.match(segments[-1]):
             merged = segments[-2] + ", " + segments[-1]
             segments = segments[:-2] + [merged]
-
         label = segments[-1]
-
-        # Strip leading articles/connectors
         label = re.sub(
             r"^(?:incluant|notamment|ainsi\s+que|et\s+)?(?:l[ae'']|les|le|la|un|une|des|du)?\s+",
             "", label, flags=re.IGNORECASE
         ).strip()
-
-        # Skip summary lines
         if re.search(r"\b(total|environ\s+\d+|réparti)", label, re.IGNORECASE):
             continue
         if len(label) < 4:
@@ -686,37 +847,22 @@ def _extract_pour_heures(raw: str) -> list[tuple[str, int]]:
             pass
     return results
 
-# Label-only lines: bullet points or short imperative sentences with NO hours.
-# Matches lines that start with a bullet/number or a capital/verb, are not too
-# long, and contain no hour marker — these are task labels awaiting hours.
 _LABEL_ONLY_PAT = re.compile(
     r"^"
-    r"(?:[•\-*]\s*|(?:\d+[.)]\s*))?"          # optional bullet / number
-    r"([A-ZÀ-Ÿa-zà-ÿ][^\n]{5,120})"           # label — at least 5 chars, allows parens
+    r"(?:[•\-*]\s*|(?:\d+[.)]\s*))?"
+    r"([A-ZÀ-Ÿa-zà-ÿ][^\n]{5,120})"
     r"\s*$",
     re.MULTILINE,
 )
 
 
 def _extract_tasks(raw: str) -> list[dict]:
-    """
-    Try to extract (label, hours) pairs from a freeform task breakdown string.
-
-    Handles four formats:
-      Line:    "Conception UX/UI : 50 h"  or  "• Wireframing — 40h"
-      Inline:  "conception UX/UI (50 h), développement backend (80 h)"
-      Prose:   "…incluant la conception UX/UI (50 h) pour l'analyse…"
-      Mixed:   any combination of the above in a single block
-    """
     tasks = []
     seen  = set()
 
     def _clean(label: str) -> str:
-        """Strip surrounding noise and leading connector/article words."""
         label = re.sub(r"\s+", " ", label).strip("\u2022*-\u2013\u2014 :,().\"\n\t")
         label = re.sub(r"^[\d.]+\s*", "", label)
-        # Iteratively strip French articles and connector prefixes.
-        # Must be iterative since "et la" needs two passes: "et " then "la ".
         _STRIP = re.compile(
             r"^(?:incluant|including|notamment|dont"
             r"|tels?\s+que|such\s+as"
@@ -746,11 +892,6 @@ def _extract_tasks(raw: str) -> list[dict]:
         seen.add(key)
         tasks.append({"label": label, "hours": hours})
 
-    # ── 0. Tab-separated format ───────────────────────────────────────────────
-    # Format: <hours>h   <title> — <detail>   <tech, tech, ...>
-    # Blocks separated by blank lines. Fields separated by 3+ spaces or tabs.
-    # "same as above" in tech field inherits previous task's tech list.
-    # This format is detected first since it is the most explicit.
     prev_tech: list[str] = []
     blocks = re.split(r"\n{2,}", raw.strip())
     tab_tasks = []
@@ -758,7 +899,6 @@ def _extract_tasks(raw: str) -> list[dict]:
         block = block.strip()
         if not block:
             continue
-        # Split on tab or 3+ consecutive spaces
         parts = re.split(r"\t|   +", block, maxsplit=2)
         if len(parts) < 2:
             continue
@@ -768,13 +908,11 @@ def _extract_tasks(raw: str) -> list[dict]:
         hours = int(hours_part[:-1])
         desc_part = parts[1].strip() if len(parts) > 1 else ""
         tech_part = parts[2].strip() if len(parts) > 2 else ""
-        # Split description on em-dash to get title and detail
         if "—" in desc_part:
             title, detail = desc_part.split("—", 1)
             label = title.strip()
         else:
             label = desc_part
-        # Resolve tech inheritance
         if tech_part.strip().lower() == "same as above":
             tech = prev_tech[:]
         else:
@@ -790,22 +928,17 @@ def _extract_tasks(raw: str) -> list[dict]:
                 t["description"] = ""
         return tab_tasks
 
-    # ── 1. Line format ────────────────────────────────────────────────────────
     for line in raw.splitlines():
         m = _LINE_PAT.match(line.strip())
         if m:
             _add(m.group(1).strip(), int(m.group(2)))
 
-    # ── 1a. Hours-first line format: "150h Label : description" ──────────────
     if not tasks:
         for line in raw.splitlines():
             m = _LINE_HOURS_FIRST_PAT.match(line.strip())
             if m:
                 _add(m.group(2).strip(), int(m.group(1)))
 
-    # ── 1b. Hours-first with em-dash: "12 h — Label text" ────────────────────
-    # Run independently — does not depend on other passes finding nothing,
-    # since this format is unambiguous (hours + dash + label)
     dash_tasks: list[dict] = []
     seen_dash: set[str] = set()
     for line in raw.splitlines():
@@ -820,26 +953,20 @@ def _extract_tasks(raw: str) -> list[dict]:
                     dash_tasks.append({"label": label, "hours": hours,
                                        "description": ""})
     if dash_tasks and len(dash_tasks) > len(tasks):
-        # The dash format found more tasks — use it
         tasks = dash_tasks
 
-    # ── 2. Inline / prose format ──────────────────────────────────────────────
     if not tasks:
         for m in _INLINE_PAT.finditer(raw):
             _add(m.group(1), int(m.group(2)))
 
-    # ── 3. Prose fallback — scan for any "label (Nh)" in running text ─────────
     if not tasks:
         for m in _PROSE_PAT.finditer(raw):
             _add(m.group(1), int(m.group(2)))
 
-    # ── 3b. French "pour N heures" pattern ────────────────────────────────────
     if not tasks:
         for label, hours in _extract_pour_heures(raw):
             _add(label, hours)
 
-    # ── 4. Label-only — bullet/numbered lines with no hours ───────────────────
-    # Returns labels with hours=0 as a signal that hours must be prompted.
     if not tasks:
         candidates = []
         for m in _LABEL_ONLY_PAT.finditer(raw):
@@ -848,37 +975,27 @@ def _extract_tasks(raw: str) -> list[dict]:
                 continue
             if _TOTAL_PAT.match(raw_label):
                 continue
-            # Skip lines that look like prose sentences (too many commas or words)
             if raw_label.count(",") > 3 or len(raw_label.split()) > 16:
                 continue
-            # Use _clean only for dedup key, preserve original for display
             key = _clean(raw_label).lower()[:30]
             if not key or key in seen:
                 continue
             seen.add(key)
-            # Strip only leading bullet/number, keep rest intact
             display = re.sub(r"^[•\-*\d.)]+\s*", "", raw_label).strip()
             candidates.append({"label": display, "hours": 0, "description": ""})
         if candidates:
             tasks = candidates
 
-    # ── 5. Assign task IDs ────────────────────────────────────────────────────
     for i, t in enumerate(tasks, 1):
         t["task_id"]     = f"t{i}"
         if "description" not in t:
             t["description"] = ""
 
-    # ── 5. Garbled-label sanity check ─────────────────────────────────────────
-    # A label is garbled if it looks like a mid-sentence fragment:
-    # - very short (≤2 chars after cleaning), OR
-    # - contains sentence-ending punctuation mid-label (period not in acronym)
-    # We do NOT reject labels simply for starting with a lowercase letter —
-    # French common nouns (conception, développement, etc.) are always lowercase.
     if tasks:
         garbled = sum(
             1 for t in tasks
             if len(t["label"]) <= 2
-            or re.search(r"\.\s+[a-z]", t["label"])   # period followed by lowercase word
+            or re.search(r"\.\s+[a-z]", t["label"])
         )
         if len(tasks) > 0 and garbled / len(tasks) > 0.60:
             return []
@@ -893,22 +1010,14 @@ def _confirm_tasks(
     console: Console,
     description: str = "",
 ) -> list[dict] | None:
-    """
-    Show extracted tasks for confirmation, or fall back to manual entry.
-    When falling back to manual entry, display the full project description
-    so the coordinator can read it and type in the tasks.
-    Returns confirmed task list, or None if user aborts.
-    """
     from src.ingest import _prompt_tasks, _print_task_table
 
     def _show_description() -> None:
-        """Show the full project description through a pager (less-style)."""
         import pydoc
         text = (description + "\n\n" + raw).strip() if description else raw.strip()
         if text:
             pydoc.pager(text)
 
-    # ── Labels found but no hours — prompt only for hours ────────────────────
     labels_only = extracted and all(t["hours"] == 0 for t in extracted)
 
     if labels_only:
@@ -920,7 +1029,7 @@ def _confirm_tasks(
         console.print()
 
         if dry_run:
-            return extracted   # hours=0 shown as placeholder in dry-run
+            return extracted
 
         _show_description()
         console.print(
@@ -963,7 +1072,6 @@ def _confirm_tasks(
             return extracted
         if answer == "n":
             return None
-        # edit → show description then fall through to manual
         _show_description()
         console.print("    [dim]Entering manual task definition…[/dim]")
 
@@ -982,7 +1090,6 @@ def _confirm_tasks(
         if answer not in ("", "y"):
             return None
 
-        # Show the full description so the coordinator can read it while typing
         _show_description()
 
     if not dry_run:
@@ -1008,15 +1115,10 @@ def _resolve_company(
     dry_run: bool,
     console: Console,
 ) -> tuple[str, str]:
-    """
-    Try to infer a company name from the client description field and email domain.
-    Prompts for confirmation. Returns (company_id, company_name).
-    """
     from src.ingest import _slugify
 
     guessed = ""
 
-    # 1. Known institutional domains → canonical name
     m = re.search(r"@([\w\-]+)\.", lead_email)
     if m:
         domain = m.group(1).lower().replace("-", "")
@@ -1025,7 +1127,6 @@ def _resolve_company(
         elif domain not in _GENERIC_DOMAINS:
             guessed = domain.replace("-", " ").title()
 
-    # 2. Short client description (likely a company name)
     if not guessed and client_desc and len(client_desc) < 60 and "\n" not in client_desc:
         guessed = client_desc
 
@@ -1057,7 +1158,6 @@ def _ensure_company(
     language: str,
     semester: str,
 ) -> None:
-    """Create company JSON if it doesn't exist yet."""
     from src.store import list_ids, save_json
     if company_id in list_ids("companies"):
         return
@@ -1080,11 +1180,6 @@ def _ensure_company(
 # ── Utilities ─────────────────────────────────────────────────────────────────
 
 def _read_tabular(path: Path) -> list[dict]:
-    """
-    Read a tabular export (CSV or XLSX) into a list of dicts.
-    CSV: tries semicolon then comma delimiter, common encodings.
-    XLSX: reads the first sheet, first row as header.
-    """
     suffix = path.suffix.lower()
 
     if suffix == ".xlsx":
@@ -1101,7 +1196,6 @@ def _read_tabular(path: Path) -> list[dict]:
             print(f"  ERROR reading {path.name}: {e}")
             return []
 
-    # CSV — try semicolon first (MS Forms default), then comma
     for delimiter in (";", ","):
         for enc in ("utf-8-sig", "utf-8", "latin-1"):
             try:
@@ -1115,23 +1209,14 @@ def _read_tabular(path: Path) -> list[dict]:
 
 
 def _find_tabular(folder: Path, stem: str) -> Path | None:
-    """
-    Find a tabular file for the given stem (students or projects).
-    Accepts exact name first, then falls back to any file whose name
-    starts with the stem — handles MS Forms exports like 'students(1).xlsx'
-    or exports with the full form title.
-    """
-    # Exact match first
     for ext in (".csv", ".xlsx"):
         p = folder / f"{stem}{ext}"
         if p.exists():
             return p
-    # Fuzzy: any file starting with the stem (case-insensitive)
     for ext in (".xlsx", ".csv"):
         matches = sorted(folder.glob(f"{stem}*{ext}"))
         if matches:
             return matches[0]
-    # Even fuzzier: stem appears anywhere in filename
     for ext in (".xlsx", ".csv"):
         matches = sorted(f for f in folder.glob(f"*{ext}")
                          if stem.lower() in f.name.lower())
@@ -1141,35 +1226,22 @@ def _find_tabular(folder: Path, stem: str) -> Path | None:
 
 
 def _get(row: dict, key: str) -> str:
-    """
-    Case- and whitespace-tolerant dict lookup for MS Forms CSV/XLSX headers.
-    Handles trailing spaces, non-breaking spaces, apostrophe variants, and
-    columns that Excel has truncated mid-word.
-
-    Match priority:
-      1. Exact match (raw)
-      2. Exact match after normalisation
-      3. Prefix match — the stored key starts with the lookup key (or vice versa)
-    """
     import unicodedata
 
     def _norm(s: str) -> str:
         s = unicodedata.normalize("NFC", s)
         return s.lower().strip().replace("\xa0", " ").replace("'", "'").replace("\u2019", "'")
 
-    # Direct hit first
     v = row.get(key)
     if v is not None:
         return (v or "").strip()
 
     key_n = _norm(key)
 
-    # Exact normalised match
     for k, val in row.items():
         if _norm(k) == key_n:
             return (val or "").strip()
 
-    # Prefix match — handles Excel-truncated column names
     for k, val in row.items():
         k_n = _norm(k)
         if k_n.startswith(key_n) or key_n.startswith(k_n):
@@ -1179,25 +1251,15 @@ def _get(row: dict, key: str) -> str:
 
 
 def _name_from_email(email: str) -> str:
-    """
-    Infer a display name from a college email address.
-    e.g. marie.dupont@college-lasalle.qc.ca → Marie Dupont
-         j.tremblay@lasalle.qc.ca → J. Tremblay
-    """
     if not email or "@" not in email:
         return ""
     local = email.split("@")[0]
-    # Strip numeric suffixes (e.g. marie.dupont2 → marie.dupont)
     local = re.sub(r"\d+$", "", local)
     parts = re.split(r"[._-]", local)
     return " ".join(p.capitalize() for p in parts if p)
 
 
 def _name_from_forms_filename(raw: str) -> str:
-    """
-    MS Forms appends '_Firstname Lastname (truncated)' to uploaded filenames.
-    Works on both plain filenames and SharePoint URLs.
-    """
     if not raw:
         return ""
     from urllib.parse import unquote
@@ -1211,12 +1273,6 @@ def _name_from_forms_filename(raw: str) -> str:
 
 
 def _filename_stem_from_forms(raw: str) -> str:
-    """
-    Extract a matchable filename stem from either:
-      - a plain filename:  "AkramCVvvv (1)_Akram Boughlala.pdf"
-      - a SharePoint URL:  "https://.../%20Akram%20Boughlala.pdf"
-    Returns the decoded, NFC-normalised stem (without extension), or empty string.
-    """
     if not raw:
         return ""
     import unicodedata
@@ -1224,13 +1280,10 @@ def _filename_stem_from_forms(raw: str) -> str:
     if raw.startswith("http"):
         raw = raw.split("/")[-1].split("?")[0]
     raw = unquote(raw)
-    # Normalise to NFC so accented characters compare consistently
-    # regardless of whether they came in as precomposed or decomposed
     return unicodedata.normalize("NFC", Path(raw).stem)
 
 
 def _nfc_lower(s: str) -> str:
-    """Lowercase + NFC normalise for consistent accent comparison."""
     import unicodedata
     return unicodedata.normalize("NFC", s).lower()
 
@@ -1239,25 +1292,12 @@ _DOC_EXTENSIONS = {".pdf", ".docx", ".doc", ".png", ".jpg", ".jpeg", ".tiff", ".
 
 
 def _ascii_only(s: str) -> str:
-    """Strip to lowercase ASCII alphanumerics only — for accent-blind matching."""
     import unicodedata
-    # Decompose accented chars then drop non-ASCII
     nfkd = unicodedata.normalize("NFKD", s)
     return re.sub(r"[^a-z0-9]", "", nfkd.lower())
 
 
 def _find_file(folder: Path, forms_value: str) -> Path | None:
-    """
-    Find the actual file in folder whose stem best matches the Forms value.
-    Accepts PDF, DOCX, and image formats. forms_value may be a plain filename
-    or a SharePoint URL.
-
-    Matching passes (in order):
-      1. Exact NFC-normalised stem match
-      2. Partial NFC match (one contains the other)
-      3. Last-underscore name segment match
-      4. ASCII-only alphanumeric match (handles all accent/encoding issues)
-    """
     if not folder.exists() or not forms_value:
         return None
 
@@ -1268,18 +1308,15 @@ def _find_file(folder: Path, forms_value: str) -> Path | None:
     candidates = [f for f in folder.iterdir()
                   if f.is_file() and f.suffix.lower() in _DOC_EXTENSIONS]
 
-    # Pass 1: Exact NFC stem match
     for f in candidates:
         if _nfc_lower(f.stem) == target_stem:
             return f
 
-    # Pass 2: Partial NFC match
     for f in candidates:
         fs = _nfc_lower(f.stem)
         if target_stem in fs or fs in target_stem:
             return f
 
-    # Pass 3: Last-underscore name segment
     if "_" in target_stem:
         name_part = target_stem.rsplit("_", 1)[-1].strip()
         if name_part:
@@ -1287,13 +1324,11 @@ def _find_file(folder: Path, forms_value: str) -> Path | None:
                 if name_part in _nfc_lower(f.stem):
                     return f
 
-    # Pass 4: ASCII-only alphanumeric — handles é/è/ê and other encoding issues
     target_ascii = _ascii_only(target_stem)
     if target_ascii:
         for f in candidates:
             if _ascii_only(f.stem) == target_ascii:
                 return f
-        # Partial ASCII match
         for f in candidates:
             fa = _ascii_only(f.stem)
             if target_ascii in fa or fa in target_ascii:
@@ -1303,7 +1338,6 @@ def _find_file(folder: Path, forms_value: str) -> Path | None:
 
 
 def _title_matches_file(title: str, filename: str) -> bool:
-    """Check if a Desc/ file seems related to a project title."""
     title_words = set(re.findall(r"\w{4,}", title.lower()))
     file_words  = set(re.findall(r"\w{4,}", filename.lower()))
     return len(title_words & file_words) >= 2
