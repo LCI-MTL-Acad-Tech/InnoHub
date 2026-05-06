@@ -130,11 +130,19 @@ def _match_student(student_number: str, args) -> None:
             fill = project_fill(pmeta, rows)
             if not fill["has_open_slot"] and not getattr(args, "inactive", False):
                 continue
+            # Per-student hours already on this project
+            student_filled = sum(
+                (int(r["hours_planned"]) if str(r.get("hours_planned", "0")).isdigit() else 0)
+                for r in rows
+                if r["project_id"] == pid
+                and r["student_number"] == student_number
+                and r["status"] not in {"cancelled", "completed"}
+            )
             if has_embedding:
                 score = cosine_similarity(s_vec, load_embedding(p_emb))
             else:
                 score = 0.0
-            results.append((score, pmeta, company_name, fill))
+            results.append((score, pmeta, company_name, fill, student_filled))
 
         results.sort(key=lambda x: x[0], reverse=True)
         n    = getattr(args, "n", 5) if not getattr(args, "all", False) else len(results)
@@ -171,28 +179,31 @@ def _match_student(student_number: str, args) -> None:
             console.print()
 
         table = Table(box=box.SIMPLE_HEAD, show_header=True, header_style="bold")
-        table.add_column("Rank",    style="dim",    width=5,  justify="right")
-        table.add_column("Score",   style="green",  width=6,  justify="right")
-        table.add_column("Project", style="white",  min_width=28)
-        table.add_column("Company", style="dim",    min_width=16)
-        table.add_column("Fill",    style="cyan",   justify="right", width=14)
-        table.add_column("Status",  style="yellow", width=10)
+        table.add_column("Rank",     style="dim",     width=5,  justify="right")
+        table.add_column("Score",    style="green",   width=6,  justify="right")
+        table.add_column("Project",  style="white",   min_width=28)
+        table.add_column("Company",  style="dim",     min_width=16)
+        table.add_column("Student",  style="cyan",    justify="right", width=10)
+        table.add_column("Global",   style="magenta", justify="right", width=14)
+        table.add_column("Status",   style="yellow",  width=10)
 
-        for i, (score, pmeta, company, fill) in enumerate(shown, 1):
+        for i, (score, pmeta, company, fill, student_h) in enumerate(shown, 1):
             status_colour = "green" if pmeta["status"] == "active" else "dim"
+            total = fill["total_hours"]
             n_teams = fill["n_teams"]
             if n_teams > 1:
                 team_parts = []
                 for label, td in sorted(fill["teams"].items()):
                     col = "green" if td["remaining"] > 0 else "dim"
-                    team_parts.append(f"[{col}]{label}:{td['filled']}/{fill['total_hours']}h[/{col}]")
-                fill_str = " ".join(team_parts)
+                    team_parts.append(f"[{col}]{label}:{td['filled']}/{total}h[/{col}]")
+                global_str = " ".join(team_parts)
             else:
                 td = next(iter(fill["teams"].values()))
-                fill_str = f"{td['filled']}/{fill['total_hours']}h"
+                global_str = f"{td['filled']}/{total}h"
             table.add_row(
                 str(i), f"{score:.2f}", pmeta["title"], company,
-                fill_str,
+                f"{student_h}/{total}h",
+                global_str,
                 f"[{status_colour}]{pmeta['status']}[/{status_colour}]",
             )
 
@@ -234,7 +245,7 @@ def _match_student(student_number: str, args) -> None:
             console.print("  Invalid selection.")
             continue
 
-        _, pmeta, _, _ = shown[idx]
+        _, pmeta, _, _, _ = shown[idx]
         sem_str = pmeta.get("semester", "")
         if not sem_str:
             from src.semester import prompt as prompt_sem
@@ -371,6 +382,7 @@ def _match_company(company_name: str, args) -> None:
 
     for pmeta in projects:
         p_vec = load_embedding(pmeta["embedding_file"])
+        from src.store import project_fill
         fill  = project_fill(pmeta, rows)
 
         # Students assigned to any team of this project
@@ -594,7 +606,6 @@ def run_list(args) -> None:
                 company = m.get("company_id", "")
             fill     = _pf(m, rows)
             n_teams  = fill["n_teams"]
-            td       = next(iter(fill["teams"].values()))
             fill_str = f"{fill['filled_total']}/{fill['capacity_total']}h"
             status_c = {"active": "green", "inactive": "yellow",
                         "closed": "red"}.get(m.get("status", ""), "white")

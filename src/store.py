@@ -177,7 +177,7 @@ def project_fill(project_meta: dict, rows: list[dict]) -> dict:
 
     # Determine which team labels are actually in use
     if n_teams <= 1:
-        labels = [""]
+        labels = ["A"]
     else:
         used_labels = sorted({r.get("team", "A") for r in active})
         std_labels  = [chr(ord("A") + i) for i in range(n_teams)]

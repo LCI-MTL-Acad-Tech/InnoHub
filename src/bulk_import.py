@@ -24,7 +24,7 @@ from rich.console import Console
 from rich.table import Table
 from rich import box
 
-
+COURSE_DURATION = 15
 TODAY = date.today().isoformat()
 
 # MS Forms column names — students
@@ -303,7 +303,7 @@ def _import_students(
                 "email":                email,
                 "program":              code,
                 "semester_start":       semester,
-                "hours_available":      hours,
+                "hours_available":      hours - COURSE_DURATION,
                 "status":               "active",
                 "linkedin_url":         linkedin,
                 "portfolio_urls":       portfolio_urls,
