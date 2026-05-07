@@ -20,7 +20,7 @@ from src.fuzzy import detect_program_typo, ranked_matches
 from src.audit import log as audit_log
 
 TODAY = date.today().isoformat()
-from src.bulk_import import COURSE_HOURS
+from src.bulk_import import COURSE_DURATION
 
 with open("config.toml", "rb") as f:
     _CFG = tomllib.load(f)
@@ -235,7 +235,7 @@ def _ingest_student(files: list[Path], args) -> None:
     from src.store import semester_program_info
     sp_info = semester_program_info(semester, program_code)
     if sp_info:
-        hours_available = sp_info["hours"] - COURSE_HOURS
+        hours_available = sp_info["hours"] - COURSE_DURATION
         console.print(
             f"  [dim]Hours: {hours_available}h "
             f"({sp_info['date_start']} → {sp_info['date_end']})[/dim]"
