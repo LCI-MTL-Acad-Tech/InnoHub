@@ -716,6 +716,7 @@ def _status_student(student_number: str) -> None:
         r for r in rows
         if r["student_number"] == student_number
         and r["status"] not in {"cancelled", "completed"}
+        and (int(r["hours_planned"]) if str(r.get("hours_planned", "0")).isdigit() else 0) > 0
     ]
 
     hours_committed = sum(int(r["hours_planned"]) for r in active_rows)
@@ -726,10 +727,35 @@ def _status_student(student_number: str) -> None:
         "active": "green", "inactive": "yellow", "completed": "dim"
     }.get(meta["status"], "white")
 
+    # ── Language / lead / liaison profile ─────────────────────────────────────
+    from src.balance import LANG_SHORT
+    lang_str     = LANG_SHORT.get(meta.get("language_profile", ""), "")
+    lead_project = meta.get("team_lead_project")
+    liaison_proj = meta.get("liaison_project")
+
+    lead_note = ""
+    if lead_project:
+        try:
+            lead_title = load_json("projects", lead_project).get("title", lead_project)[:35]
+        except Exception:
+            lead_title = lead_project
+        lead_note = f"  [bold yellow]★ Lead:[/bold yellow] [dim]{lead_title}[/dim]"
+
+    liaison_note = ""
+    if liaison_proj:
+        try:
+            liaison_title = load_json("projects", liaison_proj).get("title", liaison_proj)[:35]
+        except Exception:
+            liaison_title = liaison_proj
+        liaison_note = f"  [bold cyan]⬡ Liaison:[/bold cyan] [dim]{liaison_title}[/dim]"
+
     console.print(
         f"\n  [bold]{meta['name']}[/bold]"
         f"  {meta['program']}  ·  {meta['semester_start']}"
         f"  ·  [{status_colour}]{meta['status']}[/{status_colour}]"
+        + (f"  [dim]{lang_str}[/dim]" if lang_str else "")
+        + lead_note
+        + liaison_note
     )
     console.print(
         f"  Hours: [cyan]{hours_committed}h committed[/cyan]"
@@ -760,6 +786,7 @@ def _status_student(student_number: str) -> None:
 
         table = Table(box=box.SIMPLE_HEAD, show_header=True, header_style="bold")
         table.add_column("Project",  style="white",   min_width=30)
+        table.add_column("Team",     style="cyan",    width=6)
         table.add_column("Task",     style="white",   min_width=20)
         table.add_column("Hours",    style="cyan",    justify="right")
         table.add_column("Status",   style="yellow",  justify="center")
@@ -770,9 +797,11 @@ def _status_student(student_number: str) -> None:
                 title = pmeta["title"]
             except Exception:
                 title = project_id
+            team_letter = task_rows[0].get("team", "") if task_rows else ""
             for i, r in enumerate(task_rows):
                 table.add_row(
                     title if i == 0 else "",
+                    team_letter if i == 0 else "",
                     r["task_label"],
                     f"{r['hours_planned']}h",
                     r["status"],
