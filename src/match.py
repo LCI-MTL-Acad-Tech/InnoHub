@@ -855,6 +855,13 @@ def _status_project(project_id: str) -> None:
             filled[tid] = filled.get(tid, 0) + int(r["hours_planned"])
             students_on_task.setdefault(tid, []).append(r["student_number"])
 
+        # Resolve student numbers to names once
+        def _sname(sid: str) -> str:
+            try:
+                return load_json("students", sid).get("name", sid)
+            except Exception:
+                return sid
+
         total_hours  = fill["total_hours"]
         total_filled = fill["filled_total"]
         total_remain = total_hours - total_filled
@@ -870,7 +877,7 @@ def _status_project(project_id: str) -> None:
             tid   = t["task_id"]
             f     = filled.get(tid, 0)
             rem   = t["hours"] - f
-            studs = ", ".join(students_on_task.get(tid, [])) or "—"
+            studs = ", ".join(_sname(s) for s in students_on_task.get(tid, [])) or "—"
             table.add_row(
                 t["label"], f"{t['hours']}h", f"{f}h",
                 f"[{'green' if rem > 0 else 'dim'}]{rem}h[/{'green' if rem > 0 else 'dim'}]",
@@ -897,6 +904,12 @@ def _status_project(project_id: str) -> None:
                 filled_t[tid] = filled_t.get(tid, 0) + int(r["hours_planned"])
                 students_t.setdefault(tid, []).append(r["student_number"])
 
+            def _sname_t(sid: str) -> str:
+                try:
+                    return load_json("students", sid).get("name", sid)
+                except Exception:
+                    return sid
+
             total_filled_t = td["filled"]
             total_remain_t = td["remaining"]
 
@@ -917,7 +930,7 @@ def _status_project(project_id: str) -> None:
                 tid   = t["task_id"]
                 f     = filled_t.get(tid, 0)
                 rem   = t["hours"] - f
-                studs = ", ".join(students_t.get(tid, [])) or "—"
+                studs = ", ".join(_sname_t(s) for s in students_t.get(tid, [])) or "—"
                 table.add_row(
                     t["label"], f"{t['hours']}h", f"{f}h",
                     f"[{'green' if rem > 0 else 'dim'}]{rem}h[/{'green' if rem > 0 else 'dim'}]",
