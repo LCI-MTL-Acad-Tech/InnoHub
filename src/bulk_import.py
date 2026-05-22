@@ -24,23 +24,24 @@ from rich.console import Console
 from rich.table import Table
 from rich import box
 
-# Hours already completed in class before the placement begins.
-# Subtract from the program's total internship hours to get placement hours.
-COURSE_DURATION = 15
+# NOTE: hours are now read directly from the student signup form (Document B value).
+# COURSE_DURATION subtraction is no longer applied at import time.
 
 TODAY = date.today().isoformat()
 
 # MS Forms column names — students
 _COL_ID         = "Votre numéro d'étudiant / Your student ID number"
 _COL_EMAIL      = "Votre adresse e-mail LCI / Your college email"
-_COL_PROGRAM    = "Nom de votre programme d'études / Your study program name "
+_COL_PROGRAM    = "Votre programme d'études / Your study program"
+_COL_DISCORD    = "Votre nom d'utilisateur Discord / Your Discord username"
+_COL_HOURS_FORM = "La durée de votre stage en heures / Duration of your internship in hours"
+_COL_TEACHER    = "Le nom complet de votre professeur de stage / The full name of your internship teacher"
 _COL_CV         = "Votre CV d'une page à jour / Your up-to-date one-page CV"
 _COL_CL         = "Lettre de motivation / Cover letter"
 _COL_LINKEDIN   = "URL de votre profil LinkedIn / Your LinkedIn profile URL"
 _COL_PORTFOLIO  = "URL(s) de portfolio(s) / Your portfolio URL(s)"
-_COL_LANG       = "Langue(s) de travail"
-_COL_LEADERSHIP = "Leadership"
-_COL_LIAISON    = "Liaison"
+_COL_LANG       = "Dans quelles langues êtes-vous à l'aise pour travailler ? / Which languages are you comfortable working in?"
+_COL_LEADERSHIP = "Seriez-vous intéressé(e) par la direction d'une équipe ? / Would you be interested to lead a team?"
 
 # MS Forms column names — projects
 _PCOL_NAME    = "Votre nom / Your name"
@@ -57,75 +58,74 @@ _PCOL_MORE    = "Envoyez-vous plus d'informations ? / Are you sending more infor
 
 def _resolve_language_profile(raw: str) -> str:
     """
-    Map a Langue(s) de travail freetext answer to a short code.
+    Map the new two-checkbox language question to a profile code.
+    MS Forms exports multi-select as semicolon-separated values.
 
-    Codes:
-      bilingual_helper  — fully bilingual, happy to help others
-      bilingual_passive — fully bilingual, not much help to others
-      strong_fr         — French strong, working on English
-      strong_en         — English strong, working on French
-      en_only           — English only
-      fr_only           — French only (or French dominant / English elementary)
-      trilingual        — three or more languages
-      undefined         — could not resolve
+    Options:
+      "Français / French"   — FR selected
+      "Anglais / English"   — EN selected
+      Both selected         → bilingual_passive
+      FR only               → fr_only
+      EN only               → en_only
+      Neither / unknown     → undefined
+
+    Legacy freetext answers from the old form are still handled as fallback.
     """
     if not raw:
         return "undefined"
     r = raw.lower()
-    if "espagnol" in r or "spanish" in r or "trois" in r or "three" in r or "3 lang" in r:
+
+    # New checkbox format
+    has_fr = "français" in r or "french" in r
+    has_en = "anglais" in r or "english" in r
+    if has_fr and has_en:
+        return "bilingual_passive"
+    if has_fr:
+        return "fr_only"
+    if has_en:
+        return "en_only"
+
+    # Legacy freetext fallback
+    if "espagnol" in r or "spanish" in r or "trilingual" in r:
         return "trilingual"
     if "bilingue" in r or "bilingual" in r:
         if "aide" in r or "help" in r or "heureuse" in r or "happy" in r:
             return "bilingual_helper"
         return "bilingual_passive"
-    if "français" in r and ("élevé" in r or "elementaire" in r or "élémentaire" in r):
-        return "fr_only"
-    if "français" in r and ("fort" in r or "bon" in r or "strong" in r or "french is strong" in r):
-        return "strong_fr"
-    if "anglais" in r and ("fort" in r or "bon" in r or "strong" in r or "english is strong" in r):
-        return "strong_en"
-    if "anglais" in r and ("seulement" in r or "only" in r or "vraiment capable" in r or "really only" in r):
-        return "en_only"
-    if "français" in r and ("seulement" in r or "only" in r):
-        return "fr_only"
     return "undefined"
 
 
 def _resolve_leadership(raw: str) -> str:
     """
-    Map a Leadership freetext answer to a short code.
+    Map the new leadership question to a short code.
+    New format is a yes/no interest question:
+      "Oui / Yes"  → willing
+      "Non / No"   → no
+    Legacy freetext answers are still handled as fallback.
 
     Codes:
-      lead     — already a team leader
-      willing  — would like to be
-      no       — not yet leadership material
+      lead     — already a team leader (set via `lead` command, not form)
+      willing  — interested in leading
+      no       — not interested
       undefined
     """
     if not raw:
         return "undefined"
     r = raw.lower()
+    # New yes/no format
+    if r.strip() in ("oui", "yes", "oui / yes", "yes / oui"):
+        return "willing"
+    if r.strip() in ("non", "no", "non / no", "no / non"):
+        return "no"
+    # Legacy freetext fallback
     if "déjà" in r or "already" in r:
         return "lead"
-    if "souhaiterais" in r or "would like" in r:
+    if "souhaiterais" in r or "would like" in r or "intéressé" in r or "interested" in r:
         return "willing"
     if "pas encore" in r or "not yet" in r:
         return "no"
     return "undefined"
 
-
-def _resolve_liaison(raw: str) -> bool | None:
-    """
-    Map a Liaison freetext answer to True (willing) or False (not willing).
-    Returns None if the column was absent / unresolvable.
-    """
-    if not raw:
-        return None
-    r = raw.lower()
-    if "souhaiterais" in r or "would like" in r:
-        return True
-    if "ne serai pas" in r or "won't be" in r or "trop" in r or "too much" in r:
-        return False
-    return None
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
@@ -313,16 +313,16 @@ def _import_students(
 
     console.print(f"  [bold]Students[/bold]  ({len(rows)} rows)\n")
 
-    # Detect whether the form included language/leadership/liaison columns
+    # Detect which optional columns are present
     first = rows[0] if rows else {}
-    has_lang       = bool(_get(first, _COL_LANG))
-    has_leadership = bool(_get(first, _COL_LEADERSHIP))
-    has_liaison    = bool(_get(first, _COL_LIAISON))
+    has_lang       = any(_get(first, _COL_LANG) for _ in [1])
+    has_leadership = any(_get(first, _COL_LEADERSHIP) for _ in [1])
+    has_discord    = any(_get(first, _COL_DISCORD) for _ in [1])
+    has_teacher    = any(_get(first, _COL_TEACHER) for _ in [1])
+    has_hours_form = any(_get(first, _COL_HOURS_FORM) for _ in [1])
 
     # Diagnostic: show actual column names if expected ones are missing
     if rows:
-        missing = [c for c in [_COL_ID, _COL_EMAIL, _COL_PROGRAM, _COL_CV]
-                   if not _get(first, c) and _get(first, c) == ""]
         if all(not _get(first, c) for c in [_COL_ID, _COL_EMAIL]):
             console.print("  [yellow]⚠ Expected columns not found. Actual columns:[/yellow]")
             for col in list(first.keys())[:8]:
@@ -341,14 +341,17 @@ def _import_students(
         portfolio_raw = _get(row, _COL_PORTFOLIO)
         portfolio_urls = [u.strip() for u in re.split(r"[,\n]", portfolio_raw) if u.strip()]
 
-        # Language / leadership / liaison — resolved from form if columns present
+        # New fields
+        discord_username   = _get(row, _COL_DISCORD)  if has_discord    else ""
+        internship_teacher = _get(row, _COL_TEACHER)  if has_teacher    else ""
+        hours_form_raw     = _get(row, _COL_HOURS_FORM) if has_hours_form else ""
+
+        # Language / leadership — resolved from form if columns present
         lang_raw       = _get(row, _COL_LANG)       if has_lang       else ""
         leadership_raw = _get(row, _COL_LEADERSHIP) if has_leadership else ""
-        liaison_raw    = _get(row, _COL_LIAISON)    if has_liaison    else ""
 
         language_profile = _resolve_language_profile(lang_raw)
         leadership       = _resolve_leadership(leadership_raw)
-        liaison_willing  = _resolve_liaison(liaison_raw)
 
         if lang_raw and language_profile == "undefined":
             _row_warn(console, i, sid or "?",
@@ -404,15 +407,24 @@ def _import_students(
             _row_warn(console, i, sid, f"Could not resolve program '{prog_raw}'")
 
         # ── Hours available ───────────────────────────────────────────────────
-        from src.store import semester_program_info
-        sp_info = semester_program_info(semester, code)
-        if sp_info:
-            hours = sp_info["hours"] - COURSE_DURATION
-        else:
-            hours = default_hours - COURSE_DURATION
-            if not dry_run and code not in ("???", "570.??"):
-                _row_warn(console, i, sid,
-                          f"No internship data for {code} / {semester} — using {hours}h default")
+        # Prefer hours from the form (already corrected by student from Document B).
+        # Fall back to semester_programs lookup, then default.
+        hours = 0
+        if hours_form_raw:
+            try:
+                hours = int(re.sub(r"[^0-9]", "", hours_form_raw))
+            except (ValueError, TypeError):
+                hours = 0
+        if not hours:
+            from src.store import semester_program_info
+            sp_info = semester_program_info(semester, code)
+            if sp_info:
+                hours = sp_info["hours"]
+            else:
+                hours = default_hours
+                if not dry_run and code not in ("???", "570.??"):
+                    _row_warn(console, i, sid,
+                              f"No hours on form and no internship data for {code} / {semester} — using {hours}h default")
 
         cv_path = _find_file(cv_dir, cv_fname) if cv_fname else None
         cl_path = _find_file(cl_dir, cl_fname) if cl_fname else None
@@ -495,15 +507,14 @@ def _import_students(
             meta["linkedin_url"]     = linkedin
             meta["portfolio_urls"]   = portfolio_urls
             meta["hours_available"]  = hours
-            # Only overwrite profile fields if the column was present in the form
+            if has_discord:
+                meta["discord_username"] = discord_username
+            if has_teacher:
+                meta["internship_teacher"] = internship_teacher
             if has_lang:
                 meta["language_profile"] = language_profile
             if has_leadership:
                 meta["leadership"] = leadership
-            # liaison_willing on its own doesn't set liaison_project —
-            # that is set by the `lead` command. We only store the preference.
-            if has_liaison:
-                meta["liaison_willing"] = liaison_willing
             action = "replace"
         else:
             meta = {
@@ -516,9 +527,10 @@ def _import_students(
                 "status":               "active",
                 "linkedin_url":         linkedin,
                 "portfolio_urls":       portfolio_urls,
+                "discord_username":     discord_username,
+                "internship_teacher":   internship_teacher,
                 "language_profile":     language_profile,
                 "leadership":           leadership,
-                "liaison_willing":      liaison_willing,  # True/False/None
                 "team_lead_project":    None,
                 "liaison_project":      None,
                 "reassignment_history": [],
